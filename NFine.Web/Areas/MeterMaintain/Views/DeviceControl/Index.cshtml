@@ -1,0 +1,35 @@
+﻿@{
+    ViewBag.Title = "Info";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        $('.wrapper').height($(window).height() - 11);
+        var iframeid = document.getElementById("iframeid"); //iframe id
+        if (document.getElementById) {
+            if (iframeid && !window.opera) {
+                iframeid.height = $(window).height()-98;
+            }
+        }
+    });
+</script>
+<div class="wrapper">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#a" data-toggle="tab">命令列表</a></li>
+        <li><a href="#b" data-toggle="tab">命令控制台</a></li>
+    </ul>
+    <div class="tab-content" style="padding-top: 5px;">
+        <div id="a" class="tab-pane active" style="padding: 15px;">
+            <div id="content1">
+                <iframe width="100%" id="iframeid" src="/MeterReading/ReadTask/TaskList" height="1" frameborder="0"></iframe>
+            </div>
+        </div>
+        <div id="b" class="tab-pane" style="padding: 15px;">
+            <div id="content2">
+                @{
+                    Html.RenderAction("Cmd", "DeviceControl", new { area = "MeterMaintain" });
+                }
+            </div>
+        </div>
+    </div>
+</div>

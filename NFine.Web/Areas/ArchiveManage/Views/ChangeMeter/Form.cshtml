@@ -1,0 +1,120 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $("#F_MeterCode").blur(function () {
+            if ($("#F_MeterCode").val() === $("#F_OldMeterCode").val()) {
+                $("#F_MeterCode").addError("表计编码重复");
+            } else {
+                $("#F_MeterCode").removeError();
+            }
+        });
+        $("#F_BaseDosage").blur(function () {
+            if ($("#F_BaseDosage").val() < 0) {
+                $("#F_BaseDosage").addError("表计底数小于0");
+            } else {
+                $("#F_BaseDosage").removeError();
+            }
+        });
+        if (!!keyValue) {
+            $.ajax({
+                url: "/ArchiveManage/ChangeMeter/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.F_MeterType === "WattMeter") {
+                        $("#allowReplace").css('display', 'none');
+                    } else {
+                        $("#allowReplace").css('display', 'table-row');
+                    }
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+        $("#F_AllowReplace").change(function () {
+            if ($("#F_AllowReplace").prop('checked') === true) {
+                $("#F_BaseDosage").val($("#F_TotalDosage").val());
+                $("#baseDosage").css('display', 'table-row');
+            } else {
+                $("#baseDosage").css('display', 'none');
+            }
+        });
+    });
+    function initControl() {
+        $("#F_MeterType").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "DeviceType" }
+        });
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/ArchiveManage/ChangeMeter/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">表计类型</th>
+                <td class="formValue">
+                    <select id="F_MeterType" name="F_MeterType" class="form-control required " disabled></select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">原表计编码</th>
+                <td class="formValue">
+                    <input id="F_OldArchiveId" name="F_OldArchiveId" type="hidden">
+                    <input id="F_OldMeterCode" name="F_OldMeterCode" type="text" class="form-control required" readonly="readonly" placeholder="请输入原表计编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">新表计编码</th>
+                <td class="formValue">
+                    <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control required" placeholder="请输入新表计编码" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">累计用量</th>
+                <td class="formValue">
+                    <input id="F_TotalDosage" name="F_TotalDosage" type="text" class="form-control required" readonly="readonly" placeholder="请输入累计用量" />
+                </td>
+            </tr>
+            <tr id="allowReplace" style="display:none">
+                <th class="formTitle" style="height: 35px;">选项</th>
+                <td class="formValue" style="padding-top: 1px;">
+                    <div class="ckbox">
+                        <input id="F_AllowReplace" name="F_AllowReplace" type="checkbox"><label for="F_AllowReplace">更新表计底数并同步抄表记录</label>
+                    </div>
+                </td>
+            </tr>
+            <tr id="baseDosage" style="display:none">
+                <th class="formTitle">新表计底数</th>
+                <td class="formValue">
+                    <input id="F_BaseDosage" name="F_BaseDosage" type="number" min="0" class="form-control required" placeholder="请输入新表计底数" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                    备注
+                </th>
+                <td class="formValue">
+                    <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

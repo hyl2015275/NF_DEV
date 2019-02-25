@@ -1,0 +1,103 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/ArchiveManage/SubsistenceSecurity/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $("#form1").formSerialize(data);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+    function initControl() {
+        $("#F_PriceId").bindSelect(
+         {
+             url: "/ArchiveManage/Price/GetSelectJson",
+             param: { isStatrt: true },
+             id: "F_Id",
+             text: "F_PriceName"
+         });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle" style="padding-right: 9px;">用户卡号</th>
+                <td class="formValue" id="usbox">
+                    <input id="hdtext" type="hidden" />
+                    <input id="hdvalue" type="hidden" />
+                    <input id="F_ArchiveId" name="F_ArchiveId" type="hidden" />
+                    <input id="F_UserCard" name="F_UserCard" type="text" class="form-control required" placeholder="请输入客户信息检索" />
+                </td>
+            </tr>
+            <tr id="MeterCode">
+                <th class="formTitle">表计编码</th>
+                <td class="formValue">
+                    <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control required" placeholder="请输入表计编码" disabled="disabled" />
+                    <input id="F_MeterNumber" name="F_MeterNumber" type="hidden" />
+                </td>
+            </tr>
+            <tr id="CustomerName">
+                <th class="formTitle">客户名称</th>
+                <td class="formValue">
+                    <input id="F_CustomerName" name="F_CustomerName" type="text" class="form-control required" placeholder="请输入客户名称" disabled="disabled" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行价格</th>
+                <td class="formValue">
+                    <select id="F_PriceId" name="F_PriceId" class="form-control required"></select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行时间</th>
+                <td class="formValue">
+                    <input id="F_StartTime" name="F_StartTime" type="text" class="form-control input-wdatepicker required" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd'})" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行月数</th>
+                <td class="formValue">
+                    <input id="F_EnjoyTime" name="F_EnjoyTime" type="text" class="form-control required" placeholder="请输入执行月数" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">创建人员</th>
+                <td class="formValue">
+                    <input id="F_CreatorUserId" name="F_CreatorUserId" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+
+                <th class="formTitle">创建时间</th>
+                <td class="formValue">
+                    <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">修改人员</th>
+                <td class="formValue">
+                    <input id="F_LastModifyUserId" name="F_LastModifyUserId" type="text" class="form-control" />
+                </td>
+
+            </tr>
+            <tr>
+                <th class="formTitle">修改时间</th>
+                <td class="formValue">
+                    <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

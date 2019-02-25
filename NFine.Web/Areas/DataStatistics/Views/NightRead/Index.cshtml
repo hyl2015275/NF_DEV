@@ -1,0 +1,88 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        gridList();
+    });
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/DataStatistics/NightRead/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                { label: '用户卡号', name: 'F_UserCard', width: 120, align: 'left' },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left' },
+                { label: '夜间用量', name: 'F_ThisDosage', width: 80, align: 'left' },
+                { label: '累计用量', name: 'F_TotalDosage', width: 80, align: 'left' },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left' },
+                {
+                    label: '抄表时间', name: 'F_ReadTime', width: 120, align: 'left',
+                    formatter: "daetime", formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d h:m:s' }
+                },
+                { label: '安装地址', name: 'F_CustomerAddress', width: 150, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_ReadTime desc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                begintime: $("#txt_begintime").val(),
+                endtime: $("#txt_endtime").val(),
+                keyword: $("#txt_keyword").val()
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+    }
+    function btn_export() {
+        var queryJson = {
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+            keyword: $("#txt_keyword").val()
+        }
+        $.download("/DataStatistics/NightRead/DownLoad", encodeURI("queryJson=" + JSON.stringify(queryJson)), "get");
+    }
+</script>
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-export" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_export()"><i class="fa fa-floppy-o"></i>数据导出</a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td style="padding-left: 2px;">
+                    <input type="text" placeholder="选择开始时间" readonly="readonly" id="txt_begintime" name="begintime"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', startDate: '%y-%M-%d', maxDate: '#F{$dp.$D(\'txt_endtime\')||\'%y-%M-%d\'}' })" />
+                    <input type="text" placeholder="选择结束时间" readonly="readonly" id="txt_endtime" name="endtime"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', minDate: '#F{$dp.$D(\'txt_begintime\')}', maxDate: '%y-%M-%d', startDate: '%y-%M-%d' })" />
+                </td>
+                <td style="padding-left: 2px;">
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="用户卡号/表计编码/客户名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

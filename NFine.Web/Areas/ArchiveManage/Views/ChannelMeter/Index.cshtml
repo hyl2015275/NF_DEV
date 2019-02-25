@@ -1,0 +1,169 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutIndex.cshtml";
+}
+
+<script>
+    $(function () {
+        $('#layout').layout();
+        treeView();
+        gridList();
+    });
+    function treeView() {
+        $("#itemTree").treeview({
+            url: "/ArchiveManage/Channel/GetTreeJson",
+            onnodeclick: function (item) {
+                if (item.id === "ffffffff_ffff_ffff_ffff_ffffffffffff") {
+                    $(".operate").hide();
+                }
+                else {
+                    $(".operate").show();
+                }
+                $("#txt_keyword").val('');
+                $('#btn_search').trigger("click");
+            }
+        });
+        $("#itemTree").setNodeChecked("00000000_0000_0000_0000_000000000000");
+    }
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/ArchiveManage/ChannelMeter/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表计类型',
+                    name: 'F_MeterType',
+                    width: 80,
+                    align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined
+                            ? ""
+                            : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                { label: '生产厂商', name: 'F_Factor', width: 80, align: 'left' },
+                { label: '用户卡号', name: 'F_UserCard', width: 80, align: 'left', sorttype: 'integer' },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left', sorttype: 'integer' },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left' },
+                { label: '安装地址', name: 'F_CustomerAddress', width: 150, align: 'left' },
+            ],
+            pager: "#gridPager",
+            sortname: 'F_UserCard asc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var keyword = $('#txt_keyword').val();
+            var itemId = $("#itemTree").getCurrentNode().id;
+            var queryJson = {
+                keyword: keyword,
+                channelId: itemId
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: { queryJson: JSON.stringify(queryJson) }
+            }).trigger('reloadGrid');
+        });
+    }
+    function btn_add() {
+        if ($("#itemTree").getCurrentNode() == null) {
+            $.modalAlert("请先选择设备", "error");
+            return false;
+        }
+        var itemId = $("#itemTree").getCurrentNode().id;
+        var itemValue = $("#itemTree").getCurrentNode().value;
+        if (!itemId || itemValue == "all" || itemValue == "null") {
+            $.modalAlert("请先选择设备", "error");
+            return false;
+        }
+        $.modalOpen({
+            id: "Form",
+            title: "新增表计",
+            url: "/ArchiveManage/ChannelMeter/Form?channelId=" + itemId,
+            width: "400px",
+            height: "300px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+    function btn_edit() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Form",
+            title: "修改表计",
+            url: "/ArchiveManage/ChannelMeter/Form?keyValue=" + keyValue,
+            width: "400px",
+            height: "300px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+    function btn_delete() {
+        $.deleteForm({
+            url: "/ArchiveManage/ChannelMeter/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+    function btn_import() {
+        $.modalOpen({
+            id: "import",
+            title: "批量导入",
+            url: "/ArchiveManage/ChannelMeter/Import",
+            width: "400px",
+            height: "260px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+</script>
+<div class="ui-layout" id="layout" style="height: 100%; width: 100%;">
+    <div class="ui-layout-west">
+        <div id="itemTree"></div>
+    </div>
+    <div class="ui-layout-center">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+                <div class="btn-group">
+                    <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新增表计</a>
+                    <a id="NF-import" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_import()"><i class="fa fa-plus"></i>批量导入</a>
+                </div>
+                <div class="operate">
+                    <ul class="nav nav-pills">
+                        <li class="first">已选中<span>1</span>项</li>
+                        <li><a id="NF-edit" authorize="yes" onclick="btn_edit()"><i class="fa fa-pencil-square-o"></i>转移表计</a></li>
+                        <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除表计</a></li>
+                    </ul>
+                    <a href="javascript:;" class="close"></a>
+                </div>
+                <script>$('.toolbar').authorizeButton()</script>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <div class="input-group">
+                                <input id="txt_keyword" type="text" class="form-control" placeholder="用户卡号/表计编码/客户名称" style="width: 200px;">
+                                <span class="input-group-btn">
+                                    <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="gridPanel">
+            <table id="gridList"></table>
+        </div>
+    </div>
+</div>

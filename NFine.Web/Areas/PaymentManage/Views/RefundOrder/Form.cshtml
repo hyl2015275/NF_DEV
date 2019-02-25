@@ -1,0 +1,131 @@
+﻿@using NFine.Code
+@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    $(function () {
+        $("#F_UserCard").blur(function () {
+            $.ajax({
+                url: "/ArchiveManage/Meter/GetFormJsonByUserCard",
+                data: { keyValue: $("#F_UserCard").val() },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data == null) {
+                        $("#MeterCode").css('display', 'none');
+                        $("#CustomerName").css('display', 'none');
+                        $("#Balance").css('display', 'none');
+                        $("#F_MeterCode").val("");
+                        $("#F_CustomerName").val("");
+                        $("#F_Balance").val("");
+                        $("#F_OwnerId").val("");
+                        $("#F_UserCard").addError("用户卡不存在");
+                    } else {
+                        $("#MeterCode").css('display', 'table-row');
+                        $("#CustomerName").css('display', 'table-row');
+                        $("#Balance").css('display', 'table-row');
+                        $("#form1").formSerialize(data);
+                        $("#F_UserCard").removeError();
+                    }
+                }
+            });
+        });
+        $("#F_Money").blur(function () {
+            if (($("#F_Balance").val() * 1) < ($("#F_Money").val() * 1)) {
+                $("#F_Money").addError("退费金额大于余额");
+            } else {
+                $("#F_Money").removeError();
+            }
+            if ($("#F_Money").val() < 0) {
+                $("#F_Money").addError("退费金额小于0");
+            } else {
+                $("#F_Money").removeError();
+            }
+        });
+        $("#F_UserCard").keyup(function () {
+            $("#MeterCode").css('display', 'none');
+            $("#CustomerName").css('display', 'none');
+            $("#Balance").css('display', 'none');
+            $("#F_MeterCode").val("");
+            $("#F_CustomerName").val("");
+            $("#F_Balance").val("");
+        });
+    });
+    function submitForm() {
+        var ownId = $("#F_OwnerId").val();
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        if ($("#F_MeterCode").val() === "") {
+            $("#F_UserCard").addError("用户卡不存在");
+            return false;
+        }
+        //临朐清源退负值
+        if (($("#F_Balance").val() * 1) < ($("#F_Money").val() * 1) && ownId != "bd602a97-eb06-4a5e-9c36-30eb45bc717b") {
+            $("#F_Money").addError("退费金额大于余额");
+            return false;
+        }
+        if ($("#F_Money").val() < 0) {
+            $("#F_Money").addError("退费金额小于0");
+            return false;
+        }
+        $.submitForm({
+            url: "/PaymentManage/RefundOrder/SubmitForm",
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">用户卡号</th>
+                <td class="formValue">
+                    <input id="F_UserCard" name="F_UserCard" type="text" class="form-control required" placeholder="请输入用户卡号" />
+                    <input id="F_OwnerId" name="F_OwnerId" type="text" class="form-control hide" placeholder="" />
+                </td>
+            </tr>
+            <tr id="MeterCode" style="display:none">
+                <th class="formTitle">表计编码</th>
+                <td class="formValue">
+                    <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control required" placeholder="请输入用户卡号" disabled="disabled" />
+                </td>
+            </tr>
+            <tr id="CustomerName" style="display:none">
+                <th class="formTitle">客户名称</th>
+                <td class="formValue">
+                    <input id="F_CustomerName" name="F_CustomerName" type="text" class="form-control required" placeholder="请输入用户卡号" disabled="disabled" />
+                </td>
+            </tr>
+            <tr id="Balance" style="display:none">
+                <th class="formTitle">余额</th>
+                <td class="formValue">
+                    <input id="F_Balance" name="F_Balance" type="text" class="form-control required" placeholder="请输入用户卡号" disabled="disabled" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">退费金额</th>
+                <td class="formValue">
+                    <input id="F_Money" name="F_Money" type="text" class="form-control required" placeholder="请输入退费金额" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">经办人</th>
+                <td class="formValue">
+                    <input id="F_CreatorUserName" name="F_CreatorUserName" type="text" class="form-control required" placeholder="请输入经办人" disabled="disabled" value="@OperatorProvider.Provider.GetCurrent().UserName" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">退费时间</th>
+                <td class="formValue">
+                    <input id="F_RefundTime" name="F_RefundTime" type="text" class="form-control required" placeholder="请输入缴费时间" disabled="disabled" onfocus="WdatePicker()" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

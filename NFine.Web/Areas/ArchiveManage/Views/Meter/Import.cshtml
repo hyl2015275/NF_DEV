@@ -1,0 +1,42 @@
+﻿@{
+    ViewBag.Title = "Import";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    function submitForm() {
+        $.submitUpload({
+            url: "/ArchiveManage/Meter/UpLoad",
+            formdata: new FormData($('#form1')[0]),
+            success: function () {
+                $.currentWindow().$("#gridList").resetSelection();
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    };
+</script>
+<form id="form1" method="post" enctype="multipart/form-data" action="/ArchiveManage/Meter/UpLoad">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        <strong>注意：</strong>&nbsp;数据导入必须遵循模板格式，请先下载格式模板！
+        @{
+            var companyId = NFine.Code.OperatorProvider.Provider.GetCurrent().CompanyId;
+            if (companyId == "030eca51-483a-47b6-ad46-b6164278ebcb")
+            {
+                <a class="btn btn-unlink " href="~/Areas/ArchiveManage/UploadFile/Template/张家口客户档案模板.xls">张家口客户档案模板下载</a>
+            }
+            else
+            {
+                <a class="btn btn-unlink " href="~/Areas/ArchiveManage/UploadFile/Template/客户档案模板.xls">客户档案模板下载</a>
+            }
+}
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">选择文件</th>
+                <td class="formValue">
+                    <input type="file" name="fileName" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

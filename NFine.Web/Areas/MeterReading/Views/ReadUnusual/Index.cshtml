@@ -1,0 +1,202 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        initControl();
+        gridList();
+    });
+    function initControl() {
+        ///////////////////////////////////////////////////////设备类型
+        var deviceType = top.clients.dataItems["DeviceType"];
+        for (var device in deviceType) {
+            if (deviceType.hasOwnProperty(device)) {
+                $("#txt_type").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + device + "'>" + deviceType[device] + "</a></li>");
+            }
+        }
+        $("#txt_type .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_type .dropdown-text").html(text).attr('data-value', value);
+        });
+        ///////////////////////////////////////////////////////生产厂商
+        var manufacturer = top.clients.dataItems["Manufacturer"];
+        for (var factor in manufacturer) {
+            if (manufacturer.hasOwnProperty(factor)) {
+                $("#txt_factor").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + factor + "'>" + manufacturer[factor] + "</a></li>");
+            }
+        }
+        $("#txt_factor .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_factor .dropdown-text").html(text).attr('data-value', value);
+        });
+        ///////////////////////////////////////////////////////错误类型
+        var errorType = top.clients.dataItems["ErrorType"];
+        for (var error in errorType) {
+            if (errorType.hasOwnProperty(error)) {
+                $("#txt_model").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + error + "'>" + errorType[error] + "</a></li>");
+            }
+        }
+        $("#txt_model .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_model .dropdown-text").html(text).attr('data-value', value);
+        });
+
+    }
+    function gridList() {
+        if ($("#txt_CompanyId").val() != "bd602a97-eb06-4a5e-9c36-30eb45bc717b")//临朐清源的CompanyId
+        {
+            $("#ul_conversion").css('display', 'none');
+        };
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/MeterReading/ReadUnusual/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表类型', name: 'F_MeterType', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined ? "" : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                {
+                    label: '异常类型', name: 'F_ErrorType', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["ErrorType"][cellvalue] == undefined ? "" : top.clients.dataItems["ErrorType"][cellvalue];
+                    }
+                },
+                { label: '生产厂商', name: 'F_Factor', width: 80, align: 'left' },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left' },
+                { label: '用户卡号', name: 'F_UserCard', width: 120, align: 'left' },
+                {
+                    label: '当次用量', name: 'F_Value', width: 80, align: 'left', formatter: function (cellvalue) {
+                        return cellvalue == null ? "未抄表" : cellvalue;
+                    }
+                },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left' },
+                {
+                    label: '异常时间', name: 'F_CreatorTime', width: 120, align: 'left',
+                    formatter: "daetime", formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d' }
+                },
+                 { label: '安装地址', name: 'F_CustomerAddress', width: 150, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+                factor: $("#txt_factor").find('.dropdown-text').attr('data-value'),
+                error: $("#txt_model").find('.dropdown-text').attr('data-value'),
+                begintime: $("#txt_begintime").val(),
+                endtime: $("#txt_endtime").val(),
+                keyword: $("#txt_keyword").val()
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+
+
+    }
+    function btn_delete() {
+
+        $.submitForm({
+            url: "/MeterReading/ReadUnusual/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+            //    $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+
+    }
+    function btn_export() {
+        var queryJson = {
+            device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+            factor: $("#txt_factor").find('.dropdown-text').attr('data-value'),
+            error: $("#txt_model").find('.dropdown-text').attr('data-value'),
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+            keyword: $("#txt_keyword").val()
+        }
+        $.download("/MeterReading/ReadUnusual/DownLoad", encodeURI("queryJson=" + JSON.stringify(queryJson)), "get");
+    }
+
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-export" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_export()"><i class="fa fa-floppy-o"></i>数据导出</a>
+        </div>
+        <div class="operate" id="ul_conversion">
+
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-delete2" authorize="false" onclick="btn_delete()"><i class="fa fa-floppy-o"></i>手工转正常</a></li>
+            </ul>
+
+            <a href="javascript:;" class="close"></a>
+        </div>
+
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div id="txt_type" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择表类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                    <div id="txt_model" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择异常类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                    <div id="txt_factor" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择生产厂商</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                </td>
+                <td style="padding-left: 2px;">
+                    <input type="text" placeholder="选择开始时间" readonly="readonly" id="txt_begintime" name="begintime"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', startDate: '%y-%M-%d', maxDate: '#F{$dp.$D(\'txt_endtime\')||\'%y-%M-%d\'}' })" />
+                    <input type="text" placeholder="选择结束时间" readonly="readonly" id="txt_endtime" name="endtime"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', minDate: '#F{$dp.$D(\'txt_begintime\')}', maxDate: '%y-%M-%d', startDate: '%y-%M-%d' })" />
+                </td>
+                <td style="padding-left: 2px;">
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="用户卡号/表计编码/客户名称/安装地址" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <input id="txt_CompanyId" name="txt_CompanyId" type="text" class="form-control required" style="display:none" value="@NFine.Code.OperatorProvider.Provider.GetCurrent().CompanyId" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

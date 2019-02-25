@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{875233BF-EA15-49E0-9A9C-77884A897FF6}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>NFine.Repository</RootNamespace>
+    <AssemblyName>NFine.Repository</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Library\NFine.Repository\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="NFine.Code, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Library\NFine.Code\NFine.Code.dll</HintPath>
+    </Reference>
+    <Reference Include="NFine.Data">
+      <HintPath>..\Library\NFine.Data\NFine.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="NFine.Domain">
+      <HintPath>..\Library\NFine.Domain\NFine.Domain.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ArchiveManage\ChangeMeterRepository.cs" />
+    <Compile Include="ArchiveManage\ChannelRepository.cs" />
+    <Compile Include="ArchiveManage\SubsistenceSecurityViewRepository.cs" />
+    <Compile Include="ArchiveManage\SubsistenceSecurityRepository.cs" />
+    <Compile Include="ArchiveManage\ProductRepository.cs" />
+    <Compile Include="DataStatistics\NightReadRepository.cs" />
+    <Compile Include="DataStatistics\ReportSettingRepository.cs" />
+    <Compile Include="DataStatistics\ReportStatisticsRepository.cs" />
+    <Compile Include="DataStatistics\CustomerStatisticsRepository.cs" />
+    <Compile Include="DataStatistics\RechargeReportRepository.cs" />
+    <Compile Include="DataStatistics\StatisticsRepository.cs" />
+    <Compile Include="DataStatistics\MoneyAlarmRepository.cs" />
+    <Compile Include="ArchiveManage\MeterChargingRepository.cs" />
+    <Compile Include="ArchiveManage\MeterRepository.cs" />
+    <Compile Include="ArchiveManage\PriceBaseRepository.cs" />
+    <Compile Include="ArchiveManage\PriceDetailsRepository.cs" />
+    <Compile Include="ArchiveManage\PriceRepository.cs" />
+    <Compile Include="MaterialManage\IotRepository.cs" />
+    <Compile Include="MeterReading\ForwardTaskRepository.cs" />
+    <Compile Include="MeterReading\ReadUnusualRepository.cs" />
+    <Compile Include="MeterReading\ReadRecordRepository.cs" />
+    <Compile Include="MeterReading\ReadTaskRepository.cs" />
+    <Compile Include="MeterReading\TaskListRepository.cs" />
+    <Compile Include="PaymentManage\RefundOrderRepository.cs" />
+    <Compile Include="PaymentManage\PayOrderRepository.cs" />
+    <Compile Include="PaymentManage\ChargeRecordRepository.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuipmentBase\ConnectRepository.cs" />
+    <Compile Include="SystemManage\FamilyRepository.cs" />
+    <Compile Include="SystemManage\PlatformRepository.cs" />
+    <Compile Include="SystemManage\ItemsDetailRepository.cs" />
+    <Compile Include="SystemManage\ItemsRepository.cs" />
+    <Compile Include="SystemManage\ModuleButtonRepository.cs" />
+    <Compile Include="SystemManage\ModuleRepository.cs" />
+    <Compile Include="SystemManage\AreaRepository.cs" />
+    <Compile Include="SystemManage\OrganizeRepository.cs" />
+    <Compile Include="SystemManage\RoleRepository.cs" />
+    <Compile Include="SystemManage\UserLogOnRepository.cs" />
+    <Compile Include="SystemManage\UserRepository.cs" />
+    <Compile Include="SystemManage\RoleAuthorizeRepository.cs" />
+    <Compile Include="SystemSecurity\DbBackupRepository.cs" />
+    <Compile Include="SystemSecurity\FilterIPRepository.cs" />
+    <Compile Include="SystemSecurity\LogRepository.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

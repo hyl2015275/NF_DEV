@@ -1,0 +1,198 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        initControl();
+        gridList();
+    });
+    function initControl() {
+        ///////////////////////////////////////////////////////设备类型
+        var deviceType = top.clients.dataItems["DeviceType"];
+        for (var device in deviceType) {
+            if (deviceType.hasOwnProperty(device)) {
+                $("#txt_type").children(".dropdown-menu")
+                    .append("<li><a href='javascript:void()' data-value='" +
+                        device +
+                        "'>" +
+                        deviceType[device] +
+                        "</a></li>");
+            }
+        }
+        $("#txt_type .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_type .dropdown-text").html(text).attr('data-value', value);
+        });
+        ///////////////////////////////////////////////////////生产厂商
+        var manufacturer = top.clients.dataItems["Manufacturer"];
+        for (var factor in manufacturer) {
+            if (manufacturer.hasOwnProperty(factor)) {
+                $("#txt_factor").children(".dropdown-menu")
+                    .append("<li><a href='javascript:void()' data-value='" +
+                        factor +
+                        "'>" +
+                        manufacturer[factor] +
+                        "</a></li>");
+            }
+        }
+        $("#txt_factor .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_factor .dropdown-text").html(text).attr('data-value', value);
+        });
+    }
+    function btn_export() {
+        var queryJson = {
+            device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+            factor: $("#txt_factor").find('.dropdown-text').attr('data-value'),
+            keyword: $("#txt_keyword").val(),
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+        }
+        $.download("/MeterReading/Unusual/DownLoad", encodeURI("queryJson=" + JSON.stringify(queryJson)), "get");
+    }
+    function btn_details() {
+        var archiveId = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Details",
+            title: "查看抄表详情",
+            url: "/MeterReading/TaskList/Details?archiveId=" + archiveId,
+            width: "80%",
+            height: "80%",
+            btn: null
+        });
+    }
+    function gridList() {
+        var $gridList = $("#gridList");
+        var queryJson = {
+            device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+            factor: $("#txt_factor").find('.dropdown-text').attr('data-value'),
+            keyword: $("#txt_keyword").val(),
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+        }
+        $gridList.dataGrid({
+            url: "/MeterReading/Unusual/GetGridJson",
+            height: $(window).height() - 128,
+            postData: {
+                queryJson: JSON.stringify(queryJson)
+            },
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表计类型',
+                    name: 'F_MeterType',
+                    width: 80,
+                    align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined
+                            ? ""
+                            : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                { label: '生产厂商', name: 'F_Factor', width: 80, align: 'left' },
+                { label: '用户卡号', name: 'F_UserCard', width: 80, align: 'left', sorttype: 'integer' },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left', sorttype: 'integer' },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                {
+                    label: '上次底数', name: 'F_TotalDosage', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == undefined
+                            ? "无"
+                            : cellvalue;
+                    }
+                },
+                {
+                    label: '上次上线', name: 'F_LastReadTime', width: 150, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == undefined
+                            ? "无"
+                            : cellvalue;
+                    }
+                },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left' },
+                { label: '安装地址', name: 'F_CustomerAddress', width: 150, align: 'left' },
+                { label: '备注', name: 'F_Description', width: 200, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_UserCard asc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+                factor: $("#txt_factor").find('.dropdown-text').attr('data-value'),
+                keyword: $("#txt_keyword").val(),
+                begintime: $("#txt_begintime").val(),
+                endtime: $("#txt_endtime").val(),
+            }
+            $gridList.jqGrid('setGridParam',
+            {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+    }
+</script>
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-export" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_export()"><i class="fa fa-floppy-o"></i>数据导出</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看抄表详情</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div id="txt_type" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择表类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                    <div id="txt_factor" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择生产厂商</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                </td>
+                <td style="padding-left: 2px;">
+                    <input type="text" placeholder="选择开始时间" readonly="readonly" id="txt_begintime" name="begintime" value="@DateTime.Now.ToString("yyyy-MM-dd")"
+          class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', startDate: '%y-%M-%d', maxDate: '#F{$dp.$D(\'txt_endtime\')||\'%y-%M-%d\'}' })" />
+                    <input type="text" placeholder="选择结束时间" readonly="readonly" id="txt_endtime" name="endtime" value="@DateTime.Now.ToString("yyyy-MM-dd")"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', minDate: '#F{$dp.$D(\'txt_begintime\')}', maxDate: '%y-%M-%d', startDate: '%y-%M-%d' })" />
+                </td>
+                <td style="padding-left: 2px;">
+
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="用户卡号/表计编码/客户名称/安装地址" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+
+                    </div>
+                </td>
+            </tr>
+            <tr></tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

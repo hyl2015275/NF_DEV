@@ -1,0 +1,17 @@
+﻿@using NFine.Code
+@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script src="~/Content/js/jqprint/jquery.jqprint-0.3.js"></script>
+<link media="print" href="~/Content/js/jqprint/jquery.jqprint.css" rel="stylesheet" />
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        $("#printArea").attr("src", "/Areas/PaymentManage/Template/Report2/" + keyValue + ".jpg");
+    });
+    function submitForm() {
+        $("#printArea").jqprint();
+    }
+</script>
+<img id="printArea" />

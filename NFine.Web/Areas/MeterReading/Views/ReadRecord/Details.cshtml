@@ -1,0 +1,178 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $.ajax({
+            url: "/MeterReading/ReadRecord/GetFormJson",
+            data: { keyValue: keyValue },
+            dataType: "json",
+            async: false,
+            success: function (json) {
+                if (json.F_Details !== "") {
+                    var data = JSON.parse(json.F_Details);
+                    var tbody = "";
+                    for (var p in data) {
+                        if (data.hasOwnProperty(p)) {
+                            var trs = "";
+                            trs += "<tr><th class='formTitle'>" + p + "</th> <td class='formValue'><input type='text' class='form-control' value='" + data[p] + "' /></td></tr>";
+                            tbody += trs;
+                        }
+                    };
+                    $("#details").append(tbody);
+                }
+                if (json.F_Settlement !== "") {
+                    var data = JSON.parse(json.F_Settlement);
+                    for (var p in data) {
+                        if (data.hasOwnProperty(p)) {
+                            var settlement = data[p];
+                            var tbody = "";
+                            switch (p) {
+                                case "Diurnal":
+                                    for (var d in settlement) {
+                                        if (settlement.hasOwnProperty(d)) {
+                                            var trs = "";
+                                            trs += "<tr><th class='formTitle' style='width: 150px;'>" + d + "</th> <td class='formValue'><input type='text' class='form-control' value='" + settlement[d] + "' /></td></tr>";
+                                            tbody += trs;
+                                        }
+                                    };
+                                    $("#lic").show();
+                                    $("#diurnal").append(tbody);
+                                    break;
+                                case "Hourly":
+                                    for (var d in settlement) {
+                                        if (settlement.hasOwnProperty(d)) {
+                                            var trs = "";
+                                            trs += "<tr><th class='formTitle' style='width: 150px;'>" + d + "</th> <td class='formValue'><input type='text' class='form-control' value='" + settlement[d] + "' /></td></tr>";
+                                            tbody += trs;
+                                        }
+                                    };
+                                    $("#lid").show();
+                                    $("#hourly").append(tbody);
+                                    break;
+                                case "Dense":
+                                    for (var d in settlement) {
+                                        if (settlement.hasOwnProperty(d)) {
+                                            var trs = "";
+                                            trs += "<tr><th class='formTitle' style='width: 150px;'>" + d + "</th> <td class='formValue'><input type='text' class='form-control' value='" + settlement[d] + "' /></td></tr>";
+                                            tbody += trs;
+                                        }
+                                    };
+                                    $("#lie").show();
+                                    $("#dense").append(tbody);
+                                    break;
+                            }
+
+                        }
+                    }
+                };
+                $("#form1").formSerialize(json);
+                $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                $("#form1").find('div.ckbox label').attr('for', '');
+            }
+        });
+    });
+    function initControl() {
+        $("#F_ReadType").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "ReadType" }
+        });
+        $("#F_MeterType").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "DeviceType" }
+        });
+        $("#F_MeterModel").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "MeterModel" }
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="margin-top: 10px; margin-left: 10px; margin-right: 10px;">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#a" data-toggle="tab">基本信息</a></li>
+            <li><a href="#b" data-toggle="tab">详细参数</a></li>
+            <li id="lic" style="display:none"><a href="#c" data-toggle="tab">日结数据</a></li>
+            <li id="lid" style="display:none"><a href="#d" data-toggle="tab">区间采集</a></li>
+            <li id="lie" style="display:none"><a href="#e" data-toggle="tab">密集采集</a></li>
+        </ul>
+        <div class="tab-content" style="padding-top: 5px;">
+            <div id="a" class="tab-pane active" style="padding: 15px;">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">表类型</th>
+                        <td class="formValue">
+                            <select id="F_MeterType" name="F_MeterType" class="form-control "></select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">抄表方式</th>
+                        <td class="formValue">
+                            <select id="F_ReadType" name="F_ReadTypes" class="form-control "></select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">生产厂商</th>
+                        <td class="formValue">
+                            <input id="F_Factor" name="F_Factor" type="text" class="form-control " placeholder="无" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">用户卡号</th>
+                        <td class="formValue">
+                            <input id="F_UserCard" name="v" type="text" class="form-control " placeholder="无" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">表计编码</th>
+                        <td class="formValue">
+                            <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control " placeholder="无" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">本次用量</th>
+                        <td class="formValue">
+                            <input id="F_ThisDosage" name="F_ThisDosage" type="text" class="form-control " placeholder="无" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">累计用量</th>
+                        <td class="formValue">
+                            <input id="F_TotalDosage" name="F_TotalDosage" type="text" class="form-control " placeholder="无" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">联系方式</th>
+                        <td class="formValue">
+                            <input id="F_MobilePhone" name="F_MobilePhone" type="text" class="form-control " placeholder="无" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">地址</th>
+                        <td class="formValue">
+                            <input id="F_CustomerAddress" name="F_CustomerAddress" type="text" class="form-control" placeholder="无" />
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+
+            <div id="b" class="tab-pane" style="padding: 15px;">
+                <table id="details" class="form"></table>
+            </div>
+            <div id="c" class="tab-pane" style="padding: 15px;">
+                <table id="diurnal" class="form"></table>
+            </div>
+            <div id="d" class="tab-pane" style="padding: 15px;">
+                <table id="hourly" class="form"></table>
+            </div>
+            <div id="e" class="tab-pane" style="padding: 15px;">
+                <table id="dense" class="form"></table>
+            </div>
+        </div>
+    </div>
+</form>

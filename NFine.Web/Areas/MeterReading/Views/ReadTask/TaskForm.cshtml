@@ -1,0 +1,130 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<link href="~/Content/js/autocomplete/usbox.css" rel="stylesheet" />
+<link href="~/Content/js/autocomplete/jquery.autocomplete.css" rel="stylesheet" />
+<script src="~/Content/js/autocomplete/jquery.autocomplete.js"></script>
+<script src="~/Content/js/autocomplete/usbox.js"></script>
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $("#F_MeterCode").blur(function () {
+            $.ajax({
+                url: "/ArchiveManage/Meter/GetFormJsonByMeterCode",
+                data: { keyValue: $("#F_MeterCode").val() },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data == null) {
+                        $("#F_TaskType").html("<option value=''>请选择</option>");
+                        $("#F_TaskType").attr("disabled", "disabled");
+                        $("#F_MeterCode").addError("表计不存在");
+                    } else {
+                        $("#F_MeterType").val(data.F_MeterType);
+                        $("#F_MeterCode").removeError();
+                        $("#F_TaskType").html("");
+                        $("#F_TaskType").bindSelect({
+                            url: "/SystemManage/ItemsData/GetSelectJsonWithSearch",
+                            param: { enCode: "TaskType", search: data.F_IsMbus === true ? "MbusMeter" : data.F_MeterType }
+                        });
+                        $("#F_TaskType").removeAttr("disabled");
+                    }
+                }
+            });
+        });
+        $("#usbox").usbox({
+            width: 430,
+            urlOrData: '/ArchiveManage/Meter/QueryComplete',
+            addItem: function (data) {
+                var t = $("#hdtext").val();
+                var v = $("#hdvalue").val();
+                var t1 = t != "" ? t.split(",") : [];
+                var v1 = v != "" ? v.split(",") : [];
+                t1.push(data[0]);
+                v1.push(data[2]);
+                $("#hdtext").val(t1.join(","));
+                $("#hdvalue").val(v1.join(","));
+            },
+            removeItem: function (data) {
+                var t = $("#hdtext").val();
+                var v = $("#hdvalue").val();
+                var t1 = t.split(",");
+                var v1 = v.split(",");
+                var index = -1;
+                for (var i = v1.length - 1; i >= 0; i--) {
+                    if (data[2] == v1[i]) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index > -1) {
+                    t1.splice(index, 1);
+                    v1.splice(index, 1);
+                    $("#hdtext").val(t1.join(","));
+                    $("#hdvalue").val(v1.join(","));
+                }
+            }
+        });
+    });
+    function initControl() {
+        $("#F_MeterType").change({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "DeviceType" }
+        });
+        $("#F_TaskType").bindSelect();
+        $("#F_TaskType").change(function () {
+            var taskType = $("#F_TaskType").val();
+            if (taskType == 5 || taskType == 7 || taskType > 1000) {
+                $("#Param").show();
+            }
+            else {
+                $("#Param").hide();
+            }
+        });
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/MeterReading/ReadTask/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("iframe")[0].contentWindow.$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+
+            <tr id="MeterCode">
+                <th class="formTitle">表计编码</th>
+                <td class="formValue" id="usbox">
+                    <input id="hdtext" type="hidden" />
+                    <input id="hdvalue" type="hidden" />
+                    <input id="F_MeterCode" name="F_MeterCode" class="form-control required" placeholder="请输入客户信息检索" type="text" />
+                    <input id="F_MeterType" name="F_MeterType" class="form-control " type="hidden" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">命令类型</th>
+                <td class="formValue">
+                    <select id="F_TaskType" disabled="disabled" name="F_TaskType" class="form-control required">
+                        <option value="">请选择</option>
+                    </select>
+                </td>
+            </tr>
+            <tr id="Param" hidden="hidden">
+                <th class="formTitle">设置参数</th>
+                <td class="formValue">
+                    <input id="F_Param" name="F_Param" class="form-control required" placeholder="请输入参数" type="text" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

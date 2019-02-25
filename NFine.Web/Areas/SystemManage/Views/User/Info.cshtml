@@ -1,0 +1,167 @@
+﻿@{
+    ViewBag.Title = "Info";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        $('.wrapper').height($(window).height() - 11);
+        $.ajax({
+            type: "post",
+            url: "/SystemManage/User/GetInfo",
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $("#a").formSerialize(data);
+            }
+        });
+        $.ajax({
+            type: "post",
+            url: "/SystemManage/User/GetLogInfo",
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $("#b").formSerialize(data);
+            }
+        });
+    });
+
+    function submitForm() {
+        if ($("#F_OldPassword").val() === "") {
+            $("#F_OldPassword").addError("旧密码不能为空");
+            return false;
+        } else {
+            $("#F_OldPassword").removeError();
+        }
+        if ($("#F_NewPassword").val() === "") {
+            $("#F_NewPassword").addError("新密码不能为空");
+            return false;
+        }
+        else {
+            $("#F_NewPassword").removeError();
+        }
+        if ($("#F_SurePassword").val() === "") {
+            $("#F_SurePassword").addError("确认新密码不能为空");
+            return false;
+        }
+        else {
+            $("#F_SurePassword").removeError();
+        }
+        if ($("#F_NewPassword").val() !== $("#F_SurePassword").val()) {
+            $("#F_SurePassword").addError("两次密码不一致");
+            return false;
+        }
+        else {
+            $("#F_SurePassword").removeError();
+        }
+        $.submitForm({
+            url: "/SystemManage/User/ChangePassword",
+            param: $("#form1").formSerialize(),
+            success: function () {
+                self.location.reload();
+            }
+        });
+    }
+</script>
+<div class="wrapper">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#a" data-toggle="tab">基本信息</a></li>
+        <li><a href="#b" data-toggle="tab">注册信息</a></li>
+        <li><a href="#c" data-toggle="tab">系统日志</a></li>
+    </ul>
+    <div class="tab-content" style="padding-top: 5px;">
+
+        <div id="a" class="tab-pane active" style="padding: 15px;">
+            <ul class="pop-list">
+                <li>
+                    <label>账户</label>
+                    <input id="F_Account" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>姓名</label>
+                    <input id="F_RealName" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>公司</label>
+                    <input id="F_OrganizeId" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>部门</label>
+                    <input id="F_DepartmentId" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>角色</label>
+                    <input id="F_RoleId" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>岗位</label>
+                    <input id="F_DutyId" type="text" class="form-control" readonly="readonly" />
+                </li>
+            </ul>
+        </div>
+
+        <div id="b" class="tab-pane" style="padding: 15px;">
+            <ul class="pop-list">
+                <li>
+                    <label>第一次访问时间</label>
+                    <input id="F_FirstVisitTime" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>上一次访问时间</label>
+                    <input id="F_PreviousVisitTime" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>最后修改密码时间</label>
+                    <input id="F_ChangePasswordDate" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>登录时间</label>
+                    <input id="F_LastVisitTime" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li>
+                    <label>登录次数</label>
+                    <input id="F_LogOnCount" type="text" class="form-control" readonly="readonly" />
+                </li>
+                <li class="line">
+                    <h5><span>修改密码</span></h5>
+                </li>
+                <li>
+                    <form id="form1">
+                        <div style="padding-top: 10px;">
+                            <table class="form">
+                                <tr>
+                                    <th class="formTitle" style="text-align:left">旧密码</th>
+                                    <td class="formValue">
+                                        <input id="F_OldPassword" name="F_OldPassword" type="password" style="margin-left:1%" class="form-control required" placeholder="请输入旧密码" />
+                                    </td>
+                                    <td width="66%"></td>
+                                </tr>
+                                <tr>
+                                    <th class="formTitle" style="text-align:left">新密码</th>
+                                    <td class="formValue">
+                                        <input id="F_NewPassword" name="F_NewPassword" type="password" style="margin-left:1%" class="form-control required" placeholder="请输入新密码" />
+                                    </td>
+                                    <td width="66%"></td>
+                                </tr>
+                                <tr>
+                                    <th class="formTitle" style="text-align:left">确认新密码</th>
+                                    <td class="formValue">
+                                        <input id="F_SurePassword" name="F_SurePassword" type="password" style="margin-left:1%" class="form-control required" placeholder="请输入确认新密码" />
+                                    </td>
+                                    <td width="66%"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </form>
+                </li>
+                <li>
+                    <div style="padding-left: 115px;">
+                        <a class="btn btn-primary" onclick="submitForm()"><i class="fa fa-save" style="margin-right: 5px;"></i>确认修改</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="c" class="tab-pane" style="padding-right: 15px;">
+            3
+        </div>
+    </div>
+</div>

@@ -1,0 +1,94 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/ArchiveManage/Channel/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.F_MeterType === "WattMeter") {
+                        $("#allowReplace").css('display', 'none');
+                    } else {
+                        $("#allowReplace").css('display', 'table-row');
+                    }
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+    });
+    function initControl() {
+        $("#F_ChannelType").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "ChannelType" }
+        });
+        $("#F_OwnerId").bindSelect({
+            url: "/SystemManage/Organize/GetSelectJson"
+        });
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/ArchiveManage/Channel/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">通讯类型</th>
+                <td class="formValue">
+                    <select id="F_ChannelType" name="F_ChannelType" class="form-control required"></select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">设备名称</th>
+                <td class="formValue">
+                    <input id="F_ChannelName" name="F_ChannelName" type="text" class="form-control required" placeholder="请输入设备名称" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">通讯地址</th>
+                <td class="formValue">
+                    <input id="F_ChannelContent" name="F_ChannelContent" type="text" class="form-control required" placeholder="请输入通讯地址" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">设置参数</th>
+                <td class="formValue">
+                    <input id="F_ChannelDetail" name="F_ChannelDetail" type="number" min="0" class="form-control required" placeholder="请输入设置参数" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">所属客户</th>
+                <td class="formValue">
+                    <select id="F_OwnerId" name="F_OwnerId" class="form-control required">
+                        <option value="">==请选择==</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                    备注
+                </th>
+                <td class="formValue">
+                    <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

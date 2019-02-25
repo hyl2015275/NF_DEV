@@ -1,0 +1,274 @@
+﻿@using NFine.Code
+@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<link href="~/Content/js/autocomplete/usbox.css" rel="stylesheet" />
+<link href="~/Content/js/autocomplete/jquery.autocomplete.css" rel="stylesheet" />
+<script src="~/Content/js/autocomplete/jquery.autocomplete.js"></script>
+<script src="~/Content/js/autocomplete/usbox.js"></script>
+<script>
+    $(function () {
+        initControl();
+        $("#F_UserCard").blur(function () {
+            $.ajax({
+                url: "/ArchiveManage/Meter/GetFormJsonByUserCard",
+                data: { keyValue: $("#F_UserCard").val() },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data == null) {
+                        $("#MeterCode").css('display', 'none');
+                        $("#CustomerName").css('display', 'none');
+                        $("#F_MeterCode").val("");
+                        $("#F_CustomerName").val("");
+                        $("#F_UserCard").addError("用户卡不存在");
+                    } else {
+                        $("#MeterCode").css('display', 'table-row');
+                        $("#CustomerName").css('display', 'table-row');
+                        $("#form1").formSerialize(data);
+                        $("#F_UserCard").removeError();
+                        if (data.F_MeterModel === "3") {
+                            $("#RechargeType").css('display', 'table-row');
+                        } else {
+                            $("#RechargeType").css('display', 'none');
+                        }
+                    }
+                }
+            });
+        });
+        $("#F_Money").blur(function () {
+            if ($("#F_Money").val() < 0) {
+                $("#F_Money").addError("缴费金额小于0");
+            } else {
+                $("#F_Money").removeError();
+            }
+        });
+        $("#F_Recharge").change(function () {
+            if ($("#F_Recharge").val() === "2") {
+                $("#btn_write").removeAttr("disabled");
+            } else {
+                $("#btn_write").attr("disabled", "disabled");
+            }
+        });
+        $("#F_UserCard").keyup(function () {
+            $("#MeterCode").css('display', 'none');
+            $("#CustomerName").css('display', 'none');
+            $("#F_MeterCode").val("");
+            $("#F_CustomerName").val("");
+        });
+        $("#usbox").usbox({
+            width: 430,
+            urlOrData: '/ArchiveManage/Meter/QueryComplete',
+            addItem: function (data) {
+                var t = $("#hdtext").val();
+                var v = $("#hdvalue").val();
+                var t1 = t != "" ? t.split(",") : [];
+                var v1 = v != "" ? v.split(",") : [];
+                t1.push(data[0]);
+                v1.push(data[2]);
+                $("#hdtext").val(t1.join(","));
+                $("#hdvalue").val(v1.join(","));
+            },
+            removeItem: function (data) {
+                var t = $("#hdtext").val();
+                var v = $("#hdvalue").val();
+                var t1 = t.split(",");
+                var v1 = v.split(",");
+                var index = -1;
+                for (var i = v1.length - 1; i >= 0; i--) {
+                    if (data[2] == v1[i]) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index > -1) {
+                    t1.splice(index, 1);
+                    v1.splice(index, 1);
+                    $("#hdtext").val(t1.join(","));
+                    $("#hdvalue").val(v1.join(","));
+                }
+            }
+        });
+    });
+    function initControl() {
+        $("#F_Recharge").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "RechargeType" }
+        });
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        if ($("#F_MeterCode").val() === "") {
+            $("#F_UserCard").addError("用户卡不存在");
+            return false;
+        }
+        if ($("#F_Money").val() < 0) {
+            $("#F_Money").addError("缴费金额小于0");
+            return false;
+        }
+        if ($("#F_Recharge").val() === "2" && $("#writeState").val() === "false") {
+            $.modalAlert("请先完成写卡操作", "error");
+            return false;
+        }
+        $.submitForm({
+            url: "/PaymentManage/PayOrder/SubmitForm",
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle" style="padding-right: 9px;">用户卡号<span style="color:red"> *</span></th>
+                <td class="formValue" id="usbox">
+                    <input id="hdtext" type="hidden" />
+                    <input id="hdvalue" type="hidden" />
+                    <div class="input-group">
+                        <input id="F_UserCard" name="F_UserCard" type="text" class="form-control required" placeholder="请输入客户信息检索" />
+                        <span class="input-group-btn">
+                            <button id="btn_read" type="button" onclick="javascript:readCardNo();" class="btn btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+            <tr id="MeterCode" style="display:none">
+                <th class="formTitle">表计编码</th>
+                <td class="formValue">
+                    <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control required" placeholder="请输入用户卡号" disabled="disabled" />
+                    <input id="F_MeterNumber" name="F_MeterNumber" type="hidden" />
+                </td>
+            </tr>
+            <tr id="CustomerName" style="display:none">
+                <th class="formTitle">客户名称</th>
+                <td class="formValue">
+                    <input id="F_CustomerName" name="F_CustomerName" type="text" class="form-control required" placeholder="请输入用户卡号" disabled="disabled" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">缴费金额</th>
+                <td class="formValue">
+                    <input id="F_Money" name="F_Money" type="text" class="form-control required" placeholder="请输入缴费金额" />
+                </td>
+            </tr>
+            <tr id="RechargeType" style="display:none">
+                <th class="formTitle" style="padding-right: 9px;">充值方式<span style="color:red"> *</span></th>
+                <td class="formValue">
+                    <div class="input-group">
+                        <select id="F_Recharge" name="F_Recharge" class="form-control"></select>
+                        <span class="input-group-btn">
+                            <button id="btn_write" type="button" onclick="javascript:writeCard();" class="btn btn-primary" disabled="disabled"><i class="fa fa-download"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">经办人</th>
+                <td class="formValue">
+                    <input id="F_CreatorUserName" name="F_CreatorUserName" type="text" class="form-control required" placeholder="请输入经办人" disabled="disabled" value="@OperatorProvider.Provider.GetCurrent().UserName" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">缴费时间</th>
+                <td class="formValue">
+                    <input id="F_PaymentTime" name="F_PaymentTime" type="text" class="form-control required" placeholder="请输入缴费时间" disabled="disabled" onfocus="WdatePicker()" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <object id="csharpActiveX" classid="clsid:65D8E97F-D3E2-462A-B389-241D7C38C518" style="display: none;"></object>
+                    <input type="hidden" id="writeState" value="false" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>
+<script type="text/javascript" language="javascript">
+    var activeX = document.getElementById("csharpActiveX");
+    function writeCard() {
+        var deviceId = $("#F_MeterCode").val();
+        if (deviceId === "") {
+            $("#F_UserCard").addError("用户卡不存在");
+            return false;
+        }
+        var money = $("#F_Money").val();
+        if (money === "") {
+            $("#F_Money").addError("缴费金额小于0");
+            return false;
+        }
+        var meterNumber = $("#F_MeterNumber").val();
+        $.ajax({
+            url: "/PaymentManage/PayOrder/GetPayOrderCount",
+            data: { deviceId: deviceId },
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function (data) {
+                try {
+                    var number = parseInt(data);
+                    if (number > 0) {
+                        var ret = activeX.WriteCard(meterNumber, number, parseFloat(money));
+                        if (ret === "操作成功") {
+                            $("#writeState").val("true");
+                            $.modalAlert("写卡成功", "success");
+                        } else {
+                            $.modalAlert(ret, "error");
+                        }
+                    } else {
+                        $.modalAlert("当前表计存在未到账或未圈存充值记录", "error");
+                    }
+                }
+                catch (e) {
+                    var html = "注意:本功能仅支持IE浏览器或兼容模式。</br>使用读卡机前请下载支持程序！</br><a style='color:blue;' target='_blank' href='/Content/activex/CSharpActiveX.msi'>支持程序下载</a>";
+                    $.modalAlert(html, "");
+                }
+            }
+        });
+
+    }
+    function readCardNo() {
+        try {
+            var ret = activeX.ReadCardNo();
+            if (ret === "操作成功") {
+                $.ajax({
+                    url: "/ArchiveManage/Meter/GetFormJsonByMeterNumber",
+                    data: { keyValue: activeX.MeterNumber },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        if (data == null) {
+                            $("#MeterCode").css('display', 'none');
+                            $("#CustomerName").css('display', 'none');
+                            $("#F_MeterCode").val("");
+                            $("#F_CustomerName").val("");
+                            $("#F_UserCard").addError("用户卡不存在");
+                        } else {
+                            $("#MeterCode").css('display', 'table-row');
+                            $("#CustomerName").css('display', 'table-row');
+                            $("#form1").formSerialize(data);
+                            $("#F_UserCard").removeError();
+                            if (data.F_MeterModel === "3") {
+                                $("#RechargeType").css('display', 'table-row');
+                            } else {
+                                $("#RechargeType").css('display', 'none');
+                            }
+                        }
+                    }
+                });
+            }
+            else {
+                $.modalAlert(ret, "error");
+            }
+        }
+        catch (e) {
+            var html = "注意:本功能仅支持IE浏览器或兼容模式。</br>使用读卡机前请下载支持程序！</br><a style='color:blue;' target='_blank' href='/Content/activex/CSharpActiveX.msi'>支持程序下载</a>";
+            $.modalAlert(html, "");
+        }
+    }
+</script>

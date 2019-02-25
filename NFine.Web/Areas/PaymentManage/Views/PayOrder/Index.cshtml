@@ -1,0 +1,247 @@
+﻿@using NFine.Code
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+
+<script>
+    $(function () {
+        initControl();
+        gridList();
+    });
+
+    function initControl() {
+        ///////////////////////////////////////////////////////缴费方式
+        var payType = top.clients.dataItems["PayType"];
+        for (var type in payType) {
+            if (payType.hasOwnProperty(type)) {
+                $("#txt_type").children(".dropdown-menu")
+                    .append("<li><a href='javascript:void()' data-value='" + type + "'>" + payType[type] + "</a></li>");
+            }
+        }
+        $("#txt_type .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_type .dropdown-text").html(text).attr('data-value', value);
+        });
+        ///////////////////////////////////////////////////////缴费状态
+        var payState = top.clients.dataItems["PayState"];
+        for (var state in payState) {
+            if (payState.hasOwnProperty(state)) {
+                $("#txt_state").children(".dropdown-menu")
+                    .append("<li><a href='javascript:void()' data-value='" +
+                        state +
+                        "'>" +
+                        payState[state] +
+                        "</a></li>");
+            }
+        }
+        $("#txt_state .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_state .dropdown-text").html(text).attr('data-value', value);
+        });
+    }
+
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PaymentManage/PayOrder/GetGridJson",
+            height: $(window).height() - 158,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                { label: '订单号', name: 'F_OrderNumber', width: 150, align: 'left' },
+                { label: '用户卡号', name: 'F_UserCard', width: 120, align: 'left' },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left' },
+                { label: '计费方式', name: 'F_PriceName', width: 80, align: 'left' },
+                { label: '缴费金额', name: 'F_Money', width: 80, align: 'left' }, {
+                    label: '缴费方式',
+                    name: 'F_PayType',
+                    width: 80,
+                    align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["PayType"][cellvalue] == undefined
+                            ? ""
+                            : top.clients.dataItems["PayType"][cellvalue];
+                    }
+                }, { label: '本次余额', name: 'F_Balance', width: 80, align: 'left' },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                { label: '经办人', name: 'F_CreatorUserName', width: 80, align: 'left' }, {
+                    label: '状态',
+                    name: 'F_State',
+                    width: 80,
+                    align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["PayState"][cellvalue] == undefined
+                            ? ""
+                            : top.clients.dataItems["PayState"][cellvalue] === "已完成"
+                            ? '<span class=\"label label-success\">' +
+                            top.clients.dataItems["PayState"][cellvalue] +
+                            '</span>'
+                            : '<span class=\"label label-default\">' +
+                            top.clients.dataItems["PayState"][cellvalue] +
+                            '</span>';
+                    }
+                }, {
+                    label: '缴费时间',
+                    name: 'F_PaymentTime',
+                    width: 120,
+                    align: 'left',
+                    formatter: "daetime",
+                    formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d h:m:s' }
+                }, { label: '外部订单号', name: 'F_OutOrder', width: 150, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_PaymentTime desc',
+            viewrecords: true,
+            footerrow: true,
+            gridComplete: completeMethod,
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                type: $("#txt_type").find('.dropdown-text').attr('data-value'),
+                state: $("#txt_state").find('.dropdown-text').attr('data-value'),
+                keyword: $("#txt_keyword").val(),
+                begintime: $("#txt_begintime").val(),
+                endtime: $("#txt_endtime").val(),
+            }
+            $gridList.jqGrid('setGridParam',
+            {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+    }
+
+    /*统计功能 */
+    function completeMethod() {
+        try {
+            var hits = jQuery(this).getCol('F_Money', false, 'sum').toFixed(2);
+            var hitsSum = $(this).jqGrid("getGridParam", "totalSum").toFixed(2);
+            $("#gridList").footerData('set', { "F_OrderNumber": '当前页合计:', "F_UserCard": hits, "F_MeterCode": '缴费总计：', "F_PriceName": hitsSum });
+        }
+        catch (err)
+        {
+            $("#gridList").footerData('set', { "F_OrderNumber": '当前页合计:', "F_UserCard": 0, "F_MeterCode": '缴费总计：', "F_PriceName": 0 });
+        }
+    }
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "立即缴费",
+            url: "/PaymentManage/PayOrder/Form",
+            width: "450px",
+            height: "400px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+
+    function btn_print() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        var url = '@Html.Raw(OperatorProvider.Provider.GetCurrent().CompanyId == "0f6ca4b7-ebb3-46d2-ae2b-67171bc84a9f" ? "/PaymentManage/PayOrder/SjzReport?keyValue=" : "/PaymentManage/PayOrder/BaseReport?keyValue=")';
+        $.modalOpen({
+            id: "Form",
+            title: "发票打印",
+            url: url + keyValue,
+            width: "800px",
+            height: "450px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            },
+            btn: ['确认']
+        });
+    }
+    function btn_printbill() {
+        var begintime = $("#txt_begintime").val();
+        var endtime = $("#txt_endtime").val();
+        if (begintime == "" || endtime == "") {
+            $.modalAlert("请选择查询时间!", "error");
+        }
+        else {
+            $.modalOpen({
+                id: "Form",
+                title: "发票打印",
+                url: "/PaymentManage/PayOrder/BillReport?begintime=" + begintime + "&endtime=" + endtime,
+                width: "800px",
+                height: "450px",
+                callBack: function (iframeId) {
+                    top.frames[iframeId].submitForm();
+                },
+                btn: ['确认']
+            });
+        }
+    }
+    function btn_export() {
+        var queryJson = {
+            type: $("#txt_type").find('.dropdown-text').attr('data-value'),
+            state: $("#txt_state").find('.dropdown-text').attr('data-value'),
+            keyword: $("#txt_keyword").val(),
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+        }
+        $.download("/PaymentManage/PayOrder/DownLoad", encodeURI("queryJson=" + JSON.stringify(queryJson)), "get");
+    }
+</script>
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-credit-card"></i>立即缴费</a>
+            <a id="NF-export" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_export()"><i class="fa fa-floppy-o"></i>数据导出</a>
+            <a id="NF-print2" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_printbill()"><i class="fa fa-floppy-o"></i>打印账单</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-print" authorize="yes" onclick="btn_print()"><i class="fa fa-print"></i>打印发票</a></li>
+            </ul>
+                <a href="javascript:;" class="close"></a>
+</div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div id="txt_type" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择缴费方式</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                    <div id="txt_state" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择状态</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                </td>
+                <td style="padding-left: 2px;">
+                    <input type="text" placeholder="选择开始时间" readonly="readonly" id="txt_begintime" name="begintime"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', startDate: '%y-%M-%d', maxDate: '#F{$dp.$D(\'txt_endtime\')||\'%y-%M-%d\'}' })" />
+                    <input type="text" placeholder="选择结束时间" readonly="readonly" id="txt_endtime" name="endtime"
+                           class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', minDate: '#F{$dp.$D(\'txt_begintime\')}', maxDate: '%y-%M-%d', startDate: '%y-%M-%d' })" />
+                </td>
+                <td style="padding-left: 2px;">
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="用户卡号/表计编码/客户名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager">
+    </div>
+</div>

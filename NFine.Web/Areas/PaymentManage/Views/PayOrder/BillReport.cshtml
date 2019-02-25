@@ -1,0 +1,24 @@
+﻿@using NFine.Code
+@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script src="~/Content/js/jqprint/jquery.jqprint-0.3.js"></script>
+<link media="print" href="~/Content/js/jqprint/jquery.jqprint.css" rel="stylesheet" />
+<script>
+    var keyValue = "@TempData["keyValue"]";
+    $(function () {
+        /**/
+        $("#printArea").attr("src", "/Areas/PaymentManage/Template/Report/" + keyValue + ".cshtml");
+    /**/
+});
+function submitForm() {
+    var Iframe = document.getElementById("printArea");//先获取到iframe元素
+    var iframeWindow = (Iframe.contentWindow || Iframe.contentDocument);//获取到指定iframe下window
+    //$("#printArea html body table").jqprint();
+    var body = iframeWindow.document.documentElement;
+    $(body).jqprint();
+}
+</script>
+@*<img id="printArea" />*@
+<iframe id="printArea" frameborder="0" width="780" height="350"></iframe>

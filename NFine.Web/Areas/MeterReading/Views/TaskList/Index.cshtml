@@ -1,0 +1,142 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        initControl();
+        gridList();
+    });
+    function initControl() {
+        ///////////////////////////////////////////////////////设备类型
+        var deviceType = top.clients.dataItems["DeviceType"];
+        for (var device in deviceType) {
+            if (deviceType.hasOwnProperty(device)) {
+                $("#txt_type").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + device + "'>" + deviceType[device] + "</a></li>");
+            }
+        }
+        $("#txt_type .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_type .dropdown-text").html(text).attr('data-value', value);
+        });
+    }
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/MeterReading/TaskList/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表类型', name: 'F_MeterType', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined ? "" : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                { label: '任务名称', name: 'F_TaskName', width: 80, align: 'left' },
+                { label: '设备数', name: 'F_DeviceNumber', width: 80, align: 'left' },
+                { label: '成功数', name: 'F_SuccessNumber', width: 80, align: 'left' },
+                { label: '失败数', name: 'F_FailNumber', width: 80, align: 'left' },
+                { label: '进度', name: 'F_Speed', width: 80, align: 'left' },
+                {
+                    label: '创建时间', name: 'F_CreatorTime', width: 120, align: 'left',
+                    formatter: "datetime", formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d h:m:s' }
+                },
+                { label: '备注', name: 'F_Description', width: 200, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+                keyword: $("#txt_keyword").val()
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+    }
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增任务",
+            url: "/MeterReading/TaskList/Form",
+            width: "450px",
+            height: "420px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+    function btn_delete() {
+        $.deleteForm({
+            url: "/MeterReading/TaskList/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+    function btn_details() {
+        var keyValue = $("#gridList").jqGridRowValue().F_Id;
+        $.modalOpen({
+            id: "Details",
+            title: "查看抄表详情",
+            url: "/MeterReading/TaskList/Details?keyValue=" + keyValue,
+            width: "80%",
+            height: "80%",
+            btn: null
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建任务</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-delete" authorize="yes" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除任务</a></li>
+                <li><a id="NF-Details" authorize="yes" onclick="btn_details()"><i class="fa fa-search-plus"></i>查看抄表详情</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div id="txt_type" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择表类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                </td>
+                <td style="padding-left: 2px;">
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="任务名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

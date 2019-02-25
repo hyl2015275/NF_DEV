@@ -1,0 +1,197 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        gridList();
+        initControl();
+    });
+    function initControl() {
+        ///////////////////////////////////////////////////////设备类型
+        var deviceType = top.clients.dataItems["DeviceType"];
+        for (var device in deviceType) {
+            if (deviceType.hasOwnProperty(device)) {
+                $("#txt_device").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + device + "'>" + deviceType[device] + "</a></li>");
+            }
+        }
+        $("#txt_device .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_device .dropdown-text").html(text).attr('data-value', value);
+        });
+        ///////////////////////////////////////////////////////任务类型
+        var taskType = top.clients.dataItems["TaskType"];
+        for (var task in taskType) {
+            if (taskType.hasOwnProperty(task)) {
+                $("#txt_task").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + task + "'>" + taskType[task] + "</a></li>");
+            }
+        }
+        $("#txt_task .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_task .dropdown-text").html(text).attr('data-value', value);
+        });
+        ///////////////////////////////////////////////////////执行结果
+        var taskResult = top.clients.dataItems["TaskResult"];
+        for (var result in taskResult) {
+            if (taskResult.hasOwnProperty(result)) {
+                $("#txt_result").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + result + "'>" + taskResult[result] + "</a></li>");
+            }
+        }
+        $("#txt_result .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_result .dropdown-text").html(text).attr('data-value', value);
+        });
+    }
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/MeterReading/ReadTask/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                  { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表类型', name: 'F_MeterType', width: 80, align: 'left', sortable: false,
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined ? "" : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                {
+                    label: '任务类型', name: 'F_TaskType', width: 120, align: 'left', sortable: false,
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["TaskType"][cellvalue] == undefined ? "" : top.clients.dataItems["TaskType"][cellvalue];
+                    }
+                },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left', sortable: false },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left' },
+                { label: '安装地址', name: 'F_CustomerAddress', width: 120, align: 'left' },
+                {
+                    label: '创建时间', name: 'F_CreatorTime', width: 120, align: 'left', sortable: false,
+                    formatter: "datetime", formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d h:m:s' }
+                },
+                {
+                    label: '执行时间', name: 'F_ExecuteTime', width: 120, align: 'left', sortable: false,
+                    formatter: "time", formatoptions: { srcformat: 'h:m:s', newformat: 'h:m:s' }
+                },
+
+                {
+                    label: '执行结果', name: 'F_State', width: 80, align: 'left', sortable: false,
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["TaskResult"][cellvalue] == undefined ? "" : top.clients.dataItems["TaskResult"][cellvalue] === "成功" ? '<span class=\"label label-success\">' + top.clients.dataItems["TaskResult"][cellvalue] + '</span>' : '<span class=\"label label-default\">' + top.clients.dataItems["TaskResult"][cellvalue] + '</span>';
+                    }
+                },
+                {
+                    label: '参数', name: 'F_Param', width: 120, align: 'left', sortable: false, formatter: function (cellvalue) {
+                        return cellvalue == undefined ? "无" : cellvalue;
+                    }
+                },
+            {
+                label: '返回值', name: 'F_Value', width: 120, align: 'left', sortable: false, formatter: function (cellvalue) {
+                    return cellvalue == undefined ? "无" : cellvalue;
+                }
+            }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_ExecuteTime asc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                device: $("#txt_device").find('.dropdown-text').attr('data-value'),
+                task: $("#txt_task").find('.dropdown-text').attr('data-value'),
+                result: $("#txt_result").find('.dropdown-text').attr('data-value'),
+                keyword: $("#txt_keyword").val()
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+    }
+    function btn_add() {
+        $.modalOpen({
+            id: "Form",
+            title: "新增命令",
+            url: "/MeterReading/ReadTask/TaskForm",
+            width: "450px",
+            height: "350px",
+            callBack: function (iframeId) {
+                top.frames[iframeId].submitForm();
+            }
+        });
+    }
+    function btn_delete() {
+        $.deleteForm({
+            url: "/MeterReading/ReadTask/DeleteForm",
+            param: { keyValue: $("#gridList").jqGridRowValue().F_Id },
+            success: function () {
+                $.currentWindow().$("iframe")[0].contentWindow.$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+<div class="topPanel">
+
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-add" authorize="false" class="btn btn-primary dropdown-text" onclick="btn_add()"><i class="fa fa-plus"></i>新建命令</a>
+        </div>
+        <div class="operate">
+            <ul class="nav nav-pills">
+                <li class="first">已选中<span>1</span>项</li>
+                <li><a id="NF-delete" authorize="false" onclick="btn_delete()"><i class="fa fa-trash-o"></i>删除命令</a></li>
+            </ul>
+            <a href="javascript:;" class="close"></a>
+        </div>
+
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div id="txt_device" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择表类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                    <div id="txt_task" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择任务类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                    <div id="txt_result" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择执行结果</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                </td>
+
+                <td style="padding-left: 2px;">
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="表计编码/客户名称/安装地址" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>
