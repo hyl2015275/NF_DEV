@@ -1,0 +1,87 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        gridList();
+    });
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/PaymentManage/ChargeRecord/GetGridJson",
+            height: $(window).height() - 158,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                { label: '用户卡号', name: 'F_UserCard', width: 120, align: 'left' },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left' },
+                { label: '本次用量', name: 'F_ThisDosage', width: 80, align: 'left' },
+                { label: '执行价格', name: 'F_UnitPrice', width: 80, align: 'left' },
+                { label: '本次计费', name: 'F_ThisBill', width: 80, align: 'left' },
+                { label: '本次余额', name: 'F_Balance', width: 80, align: 'left' },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left' },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left' },
+                { label: '安装地址', name: 'F_CustomerAddress', width: 150, align: 'left' },
+                {
+                    label: '计费时间', name: 'F_ChargeTime', width: 80, align: 'left',
+                    formatter: "daetime", formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d h:m:s' }
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_ChargeTime desc',
+            viewrecords: true,
+            footerrow: true,
+            gridComplete: completeMethod,
+        });
+        $("#btn_search").click(function () {
+            $gridList.jqGrid('setGridParam', {
+                postData: { keyword: $("#txt_keyword").val() }
+            }).trigger('reloadGrid');
+        });
+    }
+    /*统计功能 */
+    function completeMethod() {
+        try {
+            var hits = jQuery(this).getCol('F_ThisBill', false, 'sum').toFixed(2);
+            var hitsSum = $(this).jqGrid("getGridParam", "totalSum").toFixed(2);
+            $("#gridList").footerData('set', { "F_UserCard": '当前页合计:', "F_MeterCode": hits, "F_ThisDosage": '计费总计：', "F_UnitPrice": hitsSum });
+        }
+        catch (err)
+        {
+            $("#gridList").footerData('set', { "F_UserCard": '当前页合计:', "F_MeterCode": 0, "F_ThisDosage": '计费总计：', "F_UnitPrice": 0 });
+        }
+    }
+    function btn_export() {
+        $.download("/MeterReading/ReadRecord/DownLoad", "11", "get");
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <div class="btn-group">
+            <a id="NF-export" authorize="yes" class="btn btn-primary dropdown-text" onclick="btn_export()"><i class="fa fa-floppy-o"></i>数据导出</a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="用户卡号/表计编码/客户名称" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

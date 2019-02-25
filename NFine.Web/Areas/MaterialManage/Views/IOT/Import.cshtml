@@ -1,0 +1,32 @@
+﻿@{
+    ViewBag.Title = "Import";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    function submitForm() {
+        $.submitUpload({
+            url: "/MaterialManage/IOT/UpLoad",
+            formdata: new FormData($('#form1')[0]),
+            success: function() {
+                $.currentWindow().$("#gridList").resetSelection();
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    };
+</script>
+<form id="form1" method="post" enctype="multipart/form-data" action="/MaterialManage/IOT/UpLoad">
+    <div style="margin-bottom: 0px; border-radius: 0px;" class="alert alert-warning alert-dismissable">
+        <strong>注意：</strong>&nbsp;数据导入必须遵循模板格式，请先下载格式模板！
+        <a class="btn btn-unlink " href="~/Areas/MaterialManage/UploadFile/Template/M6310模组模板.xlsx">M6310模组数据格式模板下载</a>
+    </div>
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle">选择文件</th>
+                <td class="formValue">
+                    <input type="file" name="fileName" class="form-control" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

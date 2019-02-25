@@ -1,0 +1,115 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<script>
+    $(function () {
+        initControl();
+        gridList();
+    });
+    function initControl() {
+        ///////////////////////////////////////////////////////设备类型
+        var deviceType = top.clients.dataItems["DeviceType"];
+        for (var device in deviceType) {
+            if (deviceType.hasOwnProperty(device)) {
+                $("#txt_type").children(".dropdown-menu").append("<li><a href='javascript:void()' data-value='" + device + "'>" + deviceType[device] + "</a></li>");
+            }
+        }
+        $("#txt_type .dropdown-menu li").click(function () {
+            var text = $(this).find('a').html();
+            var value = $(this).find('a').attr('data-value');
+            $(this).parent().siblings().css("color", "black");
+            $("#txt_type .dropdown-text").html(text).attr('data-value', value);
+        });
+    }
+    function gridList() {
+        var $gridList = $("#gridList");
+        $gridList.dataGrid({
+            url: "/ArchiveManage/ChangeMeter/GetGridJson",
+            height: $(window).height() - 128,
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表类型', name: 'F_MeterType', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined ? "" : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                { label: '原表计编码', name: 'F_OldMeterCode', width: 150, align: 'left' },
+                { label: '新表计编码', name: 'F_MeterCode', width: 150, align: 'left' },
+                { label: '累计用量', name: 'F_TotalDosage', width: 80, align: 'left' },
+                {
+                    label: '表计底数', name: 'F_BaseDosage', width: 80, align: 'left',
+                    formatter: function (cellvalue) {
+                        return cellvalue == null ? 0 : cellvalue;
+                    }
+                },
+                {
+                    label: '是否更新', name: 'F_AllowReplace', width: 80, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue === true ? "<i class=\"fa fa-toggle-on\"></i>" : "<i class=\"fa fa-toggle-off\"></i>";
+                    }
+                },
+                {
+                    label: '更新状态', name: 'F_State', width: 80, align: 'center',
+                    formatter: function (cellvalue) {
+                        return cellvalue == null ? '<span class=\"label label-success\">成功</span>' : top.clients.dataItems["TaskResult"][cellvalue] == undefined ? "" : top.clients.dataItems["TaskResult"][cellvalue] === "成功" ? '<span class=\"label label-success\">' + top.clients.dataItems["TaskResult"][cellvalue] + '</span>' : '<span class=\"label label-default\">' + top.clients.dataItems["TaskResult"][cellvalue] + '</span>';
+                    }
+                },
+                {
+                    label: '创建时间', name: 'F_CreatorTime', width: 120, align: 'left',
+                    formatter: "datetime", formatoptions: { srcformat: 'y-m-d h:m:s', newformat: 'y-m-d h:m:s' }
+                },
+                { label: '备注', name: 'F_Description', width: 200, align: 'left' }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_CreatorTime desc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                device: $("#txt_type").find('.dropdown-text').attr('data-value'),
+                keyword: $("#txt_keyword").val()
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+        });
+    }
+</script>
+
+<div class="topPanel">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-primary" onclick="$.reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+        </div>
+        <script>$('.toolbar').authorizeButton()</script>
+    </div>
+    <div class="search">
+        <table>
+            <tr>
+                <td>
+                    <div id="txt_type" class="btn-group">
+                        <a class="btn btn-default dropdown-text" data-toggle="dropdown">选择表类型</a>
+                        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu"></ul>
+                    </div>
+                </td>
+                <td style="padding-left: 2px;">
+                    <div class="input-group">
+                        <input id="txt_keyword" type="text" class="form-control" placeholder="表计编码" style="width: 200px;">
+                        <span class="input-group-btn">
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div class="gridPanel">
+    <table id="gridList"></table>
+    <div id="gridPager"></div>
+</div>

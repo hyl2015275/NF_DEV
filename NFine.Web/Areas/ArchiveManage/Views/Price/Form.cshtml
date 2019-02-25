@@ -1,0 +1,405 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    var list = [0, 1000000];
+    $(function () {
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/ArchiveManage/Price/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $("#form1").formSerialize(data);
+                    if (data["F_PriceType"] == 2) {
+                        $("#cycle").css('display', 'table-row');
+                        $("#startdate").css('display', 'table-row');
+                        $("#tab2").css('display', 'none');
+                        $("#tab1").css('display', 'table');
+                    } else {
+                        $("#tab1").css('display', 'none');
+                        $("#tab2").css('display', 'table');
+                    }
+                }
+            });
+            $.ajax({
+                url: "/ArchiveManage/Price/GetDetailsListJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    var dataOrder = data.sort(
+                        function (a, b) {
+                            if (a.F_SortNumber < b.F_SortNumber) return -1;
+                            if (a.F_SortNumber > b.F_SortNumber) return 1;
+                            return 0;
+                        }
+                    );
+                    if (dataOrder.length >= 5) $("#but").css('display', 'none');
+                    for (var i = 0; i < dataOrder.length; i++) {
+                        var _len = i + 1;
+                        $("#tab").append("<tr id=" +
+                            _len +
+                            " align='center'>" +
+                            "<td>" +
+                            _len +
+                            "</td>" +
+                            "<td class='formValue'><input type='text' name='F_DetailName' id='F_DetailName" +
+                            _len +
+                            "' class='required' value='" +
+                            dataOrder[i]['F_DetailName'] +
+                            "' placeholder='请输入类目'/></td>" +
+                            "<td class='formValue'><input type='text' name='F_Price' id='F_Price" +
+                            _len +
+                            "' value='" +
+                            dataOrder[i]['F_Price'] +
+                            "' onkeyup='clearNoNum(this)' class='required' placeholder='请输入金额'/></td>" +
+                            "<td><a href=\'#\' onclick=\'deltr(" +
+                            _len +
+                            ")\'>删除</a></td>" +
+                            "</tr>");
+                    };
+                }
+            });
+            $.ajax({
+                url: "/ArchiveManage/Price/GetBaseListJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.length == 1 && data[0]["F_SortNumber"] == 0) {
+                        $("#F_PriceValue0").val(data[0]["F_PriceValue"]);
+                    } else {
+                        var dataOrder = data.sort(
+                           function (a, b) {
+                               if (a.F_SortNumber < b.F_SortNumber) return -1;
+                               if (a.F_SortNumber > b.F_SortNumber) return 1;
+                               return 0;
+                           }
+                       );
+                        if (dataOrder.length >= 6) $("#but1").css('display', 'none');
+                        for (var i = 0; i < dataOrder.length; i++) {
+                            var arry = dataOrder[i]["F_PriceName"].toString().split('-');
+                            list.push(arry[0], arry[1]);
+                        }
+                        list = unique(list);
+                        setQujian(dataOrder);
+                    }
+                }
+            });
+        }
+    });
+    function unique(arr) {
+        var res = [];
+        var json = {};
+        for (var i = 0; i < arr.length; i++) {
+            if (!json[arr[i]]) {
+                res.push(arr[i]);
+                json[arr[i]] = 1;
+            }
+        }
+        return res;
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/ArchiveManage/Price/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+
+    function initControl() {
+        $("#F_PriceType").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "PriceType" }
+        });
+        $("#F_Cycle").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "PriceCycle" }
+        });
+        $('#wizard').wizard().on('change',
+            function (e, data) {
+                var $finish = $("#btn_finish");
+                var $next = $("#btn_next");
+                if (data.direction == "next") {
+                    if (!$('#form1').formValid()) {
+                        return false;
+                    }
+                    switch (data.step) {
+                        case 2:
+                            $finish.show();
+                            $next.hide();
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    $finish.hide();
+                    $next.show();
+                }
+            });
+    }
+
+    $(document).ready(function () {
+        //<tr/>居中
+        $("#tab tr").attr("align", "center");
+        //增加<tr/>
+        $("#but").click(function () {
+            var _len = $("#tab tr").length;
+            if (_len >= 5) $("#but").css('display', 'none');
+            $("#tab").append("<tr id=" + _len + " align='center'>" +
+                "<td>" + _len + "</td>" +
+                "<td class='formValue'><input type='text' name='F_DetailName' id='F_DetailName" + _len + "' class='required' placeholder='请输入类目'/></td>" +
+                "<td class='formValue'><input type='text' name='F_Price' id='F_Price" + _len + "' value='0' onkeyup='clearNoNum(this)' class='required' placeholder='请输入金额'/></td>" +
+                "<td><a href=\'#\' onclick=\'deltr(" + _len + ")\'>删除</a></td>" +
+                "</tr>");
+        });
+        $("#but1").click(function () {
+            if ($("#val1").val() == "")
+                alert("请输入分隔点");
+            else if ($("#val1").val() <= 0)
+                alert("分隔点不允许为负");
+            else if ($("#val1").val() >= 1000000)
+                alert("分隔点不允许大于1000000");
+            else if (list.indexOf($("#val1").val()) >= 0)
+                alert("不允许添加已存在的分隔点");
+            else {
+                list.push($("#val1").val());
+                setQujian(null);
+            }
+        });
+    });
+    var deltr = function (index) {
+        var _len = $("#tab tr").length;
+        $("#but").css('display', 'block');
+        $("tr[id='" + index + "']").remove();//删除当前行
+        for (var i = index + 1, j = _len; i < j; i++) {
+            var nextTxtVal = $("#F_Price" + i).val();
+            var nextTxtName = $("#F_DetailName" + i).val();
+            $("tr[id=\'" + i + "\']").replaceWith("<tr id=" + (i - 1) + " align='center'>" +
+                "<td>" + (i - 1) + "</td>" +
+                "<td  class='formValue'><input type='text' name='F_DetailName' id='F_DetailName" + (i - 1) + "' value='" + nextTxtName + "' class='required' placeholder='请输入类目'/></td>" +
+                "<td  class='formValue'><input type='text' name='F_Price" + (i - 1) + "' value='" + nextTxtVal + "' id='F_Price" + (i - 1) + "' onkeyup='clearNoNum(this)' class='required' placeholder='请输入金额'/></td>" +
+                "<td><a href=\'#\' onclick=\'deltr(" + (i - 1) + ")\'>删除</a></td>" +
+                "</tr>");
+        }
+    }
+    var deltr1 = function (index) {
+        $("#row").css('display', 'block');
+        list = $.grep(list, function (value) {
+            return value != index;
+        });
+        setQujian(null);
+    }
+    function setQujian(dataOrder) {
+        var data = list.sort(function (a, b) {
+            return a - b;
+        });
+        if (data.length >= 6) {
+            $("#row").css('display', 'none');
+        }
+        for (var i = 0; i < data.length - 1; i++) {
+            var value = 0;
+            var _len = i + 1;
+            if (dataOrder != null)
+                value = dataOrder[i]["F_PriceValue"];
+            if (i == 0) {
+                $("#tab1").html(
+                      "<tr class='ui-jqgrid-labels'>" +
+                       " <th class='ui-th-column ui-th-ltr'>序号</th>" +
+                       " <th class='ui-th-column ui-th-ltr' width='150px'>区间</th>" +
+                        "<th class='ui-th-column ui-th-ltr' width='100px'>单价</th>" +
+                        "<th class='ui-th-column ui-th-ltr'>操作</th>" +
+                    "</tr>" +
+                    "<tr id=tr" +
+                    _len +
+                    " align='center'>" +
+                    "<td>" +
+                    _len +
+                    "</td>" +
+                    "<td class='formValue'><input type='text' name='F_PriceName' id='F_PriceName" +
+                    _len +
+                    "' value='" +
+                    list[i] +
+                    "-" +
+                    list[_len] +
+                    "' readonly='readonly'/></td>" +
+                    "<td class='formValue'><input type='text' name='F_PriceValue' id='F_PriceValue" +
+                    _len +
+                    "' value='" + value + "' onkeyup='clearNoNum(this)' class='required' placeholder='请输入金额'/></td>" +
+                    "<td></td>" +
+                    "</tr>");
+            } else {
+                $("#tab1").append("<tr id=tr" +
+                    _len +
+                    " align='center'>" +
+                    "<td>" +
+                    _len +
+                    "</td>" +
+                    "<td class='formValue'><input type='text' name='F_PriceName' id='F_PriceName" +
+                    _len +
+                    "' value='" +
+                    list[i] +
+                    "-" +
+                    list[_len] +
+                    "' readonly='readonly'/></td>" +
+                    "<td class='formValue'><input type='text' name='F_PriceValue' id='F_PriceValue" +
+                    _len +
+                    "' value='" + value + "' onkeyup='clearNoNum(this)' class='required' placeholder='请输入金额'/></td>" +
+                    "<td><a href=\'#\' onclick=\'deltr1(" + (list[i]) + ")\'>删除</a></td>" +
+                    "</tr>");
+            }
+        }
+    }
+    function clearNoNum(obj) {
+        //修复第一个字符是小数点 的情况.
+        if (obj.value != '' && obj.value.substr(0, 1) == '.') {
+            obj.value = "";
+        }
+        obj.value = obj.value.replace(/^0*(0\.|[1-9])/, '$1');//解决 粘贴不生效
+        obj.value = obj.value.replace(/[^\d.]/g, "");  //清除“数字”和“.”以外的字符
+        obj.value = obj.value.replace(/\.{2,}/g, "."); //只保留第一个. 清除多余的
+        obj.value = obj.value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+        obj.value = obj.value.replace(/^(\-)*(\d+)\.(\d\d\d).*$/, '$1$2.$3');//只能输入两个小数
+        if (obj.value.indexOf(".") < 0 && obj.value != "") {//以上已经过滤，此处控制的是如果没有小数点，首位不能为类似于 01、02的金额
+            if (obj.value.substr(0, 1) == '0' && obj.value.length == 2) {
+                obj.value = obj.value.substr(1, obj.value.length);
+            }
+        }
+    }
+    $(document).ready(function () {
+        $("#F_PriceType").change(function () {
+            var type = $(this).children('option:selected').val();
+            if (type == 2) {
+                $("#row").css('display', 'block');
+                $("#cycle").css('display', 'table-row');
+                $("#startdate").css('display', 'table-row');
+                $("#tab2").css('display', 'none');
+                $("#tab1").css('display', 'table');
+            } else {
+                $("#row").css('display', 'none');
+                $("#cycle").css('display', 'none');
+                $("#startdate").css('display', 'none');
+                $("#tab2").css('display', 'table');
+                $("#tab1").css('display', 'none');
+                list = [0, 1000000];
+                setQujian(null);
+            }
+        });
+    });
+</script>
+<form id="form1">
+    <div class="widget-body">
+        <div id="wizard" class="wizard" data-target="#wizard-steps" style="border-left: none; border-top: none; border-right: none;">
+            <ul class="steps">
+                <li data-target="#step-1" class="active"><span class="step">1</span>基本信息<span class="chevron"></span></li>
+                <li data-target="#step-2"><span class="step">2</span>基本价格<span class="chevron"></span></li>
+                <li data-target="#step-3"><span class="step">3</span>其他组成<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content" id="wizard-steps" style="border-left: none; border-bottom: none; border-right: none;">
+            <div class="step-pane active" id="step-1" style="margin: 10px; margin-bottom: 0px;">
+                <div cclass="panel panel-default">
+                    <div class="panel-body" style="width: 98%;">
+                        <table class="form">
+                            <tr>
+                                <th class="formTitle">价格类型</th>
+                                <td class="formValue">
+                                    <select id="F_PriceType" name="F_PriceType" class="form-control required"></select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle">价格名称</th>
+                                <td class="formValue">
+                                    <input id="F_PriceName" name="F_PriceName" type="text" class="form-control required" placeholder="请输入价格名称" />
+                                </td>
+                            </tr>
+                            <tr id="startdate" style="display:none">
+                                <th class="formTitle">执行日期</th>
+                                <td class="formValue">
+                                    <input id="F_StartTime" name="F_StartTime" type="text" class="form-control input-wdatepicker required" onfocus="WdatePicker()" />
+                                </td>
+                            </tr>
+                            <tr id="cycle" style="display:none">
+                                <th class="formTitle">计价周期</th>
+                                <td class="formValue">
+                                    <select id="F_Cycle" name="F_Cycle" class="form-control required">
+                                        <option value="">==请选择==</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                                    备注
+                                </th>
+                                <td class="formValue">
+                                    <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-2" style="padding: 20px;">
+                <div class="row" id="row" style="margin-left: 1px; margin-bottom: 10px;display:none">
+                    <input type="text" name="keyword" id="val1" onkeyup='clearNoNum(this)' style="width: 40%; height: 32px; line-height: 34px; color: #555; background-color: #fff; background-image: none; border: 1px solid #ddd; -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075); box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075); -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s; -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s; transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;" placeholder="请输入分隔点">
+                    <input type="button" id="but1" value="增加" class="btn btn-default" />
+                </div>
+                <table id="tab1" class="ui-jqgrid-htable ui-common-table table table-bordered" style="display: none">
+                    <tr class="ui-jqgrid-labels">
+                        <th class="ui-th-column ui-th-ltr">序号</th>
+                        <th class="ui-th-column ui-th-ltr" width="150px">区间</th>
+                        <th class="ui-th-column ui-th-ltr" width="100px">单价</th>
+                        <th class="ui-th-column ui-th-ltr">操作</th>
+                    </tr>
+                    <tr id="tr1" align='center'>
+                        <td class='formValue'><label>1</label></td>
+                        <td class='formValue'><input type="text" name='F_PriceName' id='F_PriceName1' value="0-1000000" readonly="readonly" /></td>
+                        <td class='formValue'><input type='text' name='F_PriceValue' id='F_PriceValue1' value='0' onkeyup='clearNoNum(this)' class='required' placeholder='请输入金额' /></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div cclass="panel panel-default">
+                    <div class="panel-body" style="width: 98%;">
+                        <table id="tab2" class="form">
+                            <tr>
+                                <th class="formTitle">单价</th>
+                                <td class="formValue">
+                                    <input type="text" id='F_PriceName0' name='F_PriceName' value="0-1000000" style="display:none" />
+                                    <input type="text" id="F_PriceValue0" name="F_PriceValue" onkeyup='clearNoNum(this)' class="form-control required" value="0" placeholder="请输入金额" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="step-pane" id="step-3" style="padding: 20px;">
+                <table id="tab" class="ui-jqgrid-htable ui-common-table table table-bordered">
+                    <tr class="ui-jqgrid-labels">
+                        <th class="ui-th-column ui-th-ltr">序号</th>
+                        <th class="ui-th-column ui-th-ltr">类目</th>
+                        <th class="ui-th-column ui-th-ltr">金额</th>
+                        <th class="ui-th-column ui-th-ltr">操作</th>
+                    </tr>
+                </table>
+                <div style="border: 2px; border-color: #00CC00;">
+                    <input type="button" id="but" value="增加" class="btn btn-default" />
+                </div>
+            </div>
+        </div>
+        <div class="form-button" id="wizard-actions">
+            <a id="btn_last" disabled class="btn btn-default btn-prev">上一步</a>
+            <a id="btn_next" class="btn btn-default btn-next">下一步</a>
+            <a id="btn_finish" class="btn btn-default" style="display: none;" onclick="submitForm()">完成</a>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,82 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    $(function () {
+        trshow();
+        $.ajax({
+            url: "/DataStatistics/ReportStatistics/GetSettingJson",
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                $("#form1").formSerialize(data);
+            }
+        });
+    });
+    function trshow() {
+        var myDate = new Date();
+        //获取当前年
+        var year = myDate.getFullYear();
+        //获取当前月
+        var month = 1;
+        //获取当前日
+        var date = 1;
+        var h = 0;       //获取当前小时数(0-23)
+        var m = 0;     //获取当前分钟数(0-59)
+        var s = 0;
+        $("#F_DayTime").val(p(h) + ':' + p(m))
+        $("#F_WeekTime").val(1)
+        $("#F_MonthTime").val(p(date))
+        $("#F_YearTime").val(p(month) + "-" + p(date))
+    }
+    function p(s) {
+        return s < 10 ? '0' + s : s;
+    }
+</script>
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr id="daytime">
+                <th class="formTitle">日结时间</th>
+                <td class="formValue">
+                    <input id="F_DayTime" name="F_DayTime" type="text" class="form-control required input-wdatepicker" onfocus="WdatePicker({dateFmt:'HH:mm'})" />
+                </td>
+            </tr>
+            <tr id="weektime">
+                <th class="formTitle">周结时间</th>
+                <td class="formValue">
+                    <select id="F_WeekTime" name="F_WeekTime" class="form-control required">
+                        <option value="1">星期一</option>
+                        <option value="2">星期二</option>
+                        <option value="3">星期三</option>
+                        <option value="4">星期四</option>
+                        <option value="5">星期五</option>
+                        <option value="6">星期六</option>
+                        <option value="7">星期日</option>
+                    </select>
+                </td>
+            </tr>
+            <tr id="monthtime">
+                <th class="formTitle">月结时间</th>
+                <td class="formValue">
+                    <input id="F_MonthTime" name="F_MonthTime" type="text" class="form-control required input-wdatepicker" onfocus="WdatePicker({dateFmt:'dd'})" />
+                </td>
+            </tr>
+            <tr id="yeartime">
+                <th class="formTitle">年结时间</th>
+                <td class="formValue">
+                    <input id="F_YearTime" name="F_YearTime" type="text" class="form-control required input-wdatepicker" onfocus="WdatePicker({dateFmt:'MM-dd'})" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle" valign="top" style="padding-top: 5px;">
+                    备注
+                </th>
+                <td class="formValue">
+                    <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

@@ -1,0 +1,629 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>@ViewData["compayName"]大数据可视化平台</title>
+    <script type="text/javascript" src="/content/js/jquery.js"></script>
+    <link rel="stylesheet" href="/content/css/comon0.css">
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var today = getNowFormatDate();
+            GetTotalData();
+            GetPrestoreChart();
+            GetPayTypeTotal();
+            GetMonthlyReport();
+            GetPayOrderReport();
+            $("#weather").html("<img src='/content/images/weather.png'><span>晴转多云</span><span>" + today + "</span>")
+        })
+        function getNowFormatDate() {
+            var date = new Date();
+            var seperator1 = "-";
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var strDate = date.getDate();
+            if (month >= 1 && month <= 9) {
+                month = "0" + month;
+            }
+            if (strDate >= 0 && strDate <= 9) {
+                strDate = "0" + strDate;
+            }
+            var currentdate = year + seperator1 + month + seperator1 + strDate;
+            return currentdate;
+        }
+        function GetTotalData() {
+            $.ajax({
+                url: "/BigData/GetTotalData",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    for (var item in data) {
+                        if (data.hasOwnProperty(item)) {
+                            if (data[item].indexOf("%") > -1)
+                                $(".m-top-none").eq(item).text(data[item]);
+                            else
+                                $(".m-top-none").eq(item).text(Math.round(data[item]));
+                        }
+                    }
+                }
+            });
+        }
+        function GetPrestoreChart() {
+            $.ajax({
+                url: "/BigData/GetPrestoreChart",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    PrestoreChartInit(data[0].toFixed(0), data[1], data[2]);
+                }
+            });
+        }
+        function GetPayTypeTotal() {
+            $.ajax({
+                url: "/BigData/GetPayTypeTotal",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    PayTypeChartInit(data[0], data[1], data[2]);
+                }
+            });
+        }
+        function GetMonthlyReport() {
+            $.ajax({
+                url: "/BigData/GetMonthlyReport",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    var html = "";
+                    var chartData = data.data;
+                    var costData = data.record;
+                    MonthChartInit(chartData[0].toFixed(0), chartData[1].toFixed(0), chartData[2].toFixed(0));
+                    for (var item in costData) {
+                        if (costData.hasOwnProperty(item)) {
+                            html += "<li class='clearfix'> <span class='pulll_left'><img src='/content/images/head.jpg'>" + costData[item].serial + "." + costData[item].name + "</span> <span class='pulll_right'>消费" + costData[item].sumcost.toFixed(0) + "元</span> </li>"
+                        }
+                    }
+                    $("#adduser").html(html);
+                }
+            });
+            var html = $(".wrap ul").html()
+            $(".wrap ul").append(html)
+            var ls = $(".wrap li").length / 2 + 1
+            i = 0
+            ref = setInterval(function () {
+                i++
+                if (i == ls) {
+                    i = 1
+                    $(".wrap ul").css({ marginTop: 0 })
+                    $(".wrap ul").animate({ marginTop: -'.52' * i + 'rem' }, 1000)
+                }
+                $(".wrap ul").animate({ marginTop: -'.52' * i + 'rem' }, 1000)
+
+
+            }, 2400);
+        }
+        function GetPayOrderReport() {
+            $.ajax({
+                url: "/BigData/GetPayOrderReport",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    var html = "";
+                    for (var item in data) {
+                        if (data.hasOwnProperty(item)) {
+                            var type = data[item].type == "0" ? "营业厅缴费" : "支付宝缴费";
+                            html += "<li><p>" + data[item].serial + "." + data[item].name + type + data[item].money.toFixed(0) + "元</p></li>"
+                        }
+                    }
+                    $("#addpay").html(html);
+                }
+            });
+            var html2 = $(".adduser ul").html()
+            $(".adduser ul").append(html2)
+            var ls2 = $(".adduser li").length / 2 + 1
+            a = 0
+            ref = setInterval(function () {
+                a++
+                if (a == ls2) {
+                    a = 1
+                    $(".adduser ul").css({ marginTop: 0 })
+                    $(".adduser ul").animate({ marginTop: -'.5' * a + 'rem' }, 800)
+                }
+                $(".adduser ul").animate({ marginTop: -'.5' * a + 'rem' }, 800)
+
+
+            }, 4300);
+        }
+        function fullScreen(element) {
+            if (element.requestFullScreen) {
+                element.requestFullScreen();
+            } else if (element.webkitRequestFullScreen) {
+                element.webkitRequestFullScreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            }
+        }
+        function PayTypeChartInit(v0, v1, v2) {
+            var plantCap = [{
+                name: '微信支付',
+                value: v2
+            }, {
+                name: '支付宝',
+                value: v1
+            }, {
+                name: '营业厅',
+                value: v0
+            }];
+            var datalist = [{
+                offset: [71, 48],
+                symbolSize: 45,
+                // opacity: .95,
+                color: 'rgba(73,188,247,.14)',
+
+            }, {
+
+                offset: [45, 70],
+                symbolSize: 50,
+                color: 'rgba(73,188,247,.14)'
+            }, {
+                offset: [24, 43],
+                symbolSize: 70,
+                color: 'rgba(73,188,247,.14)'
+
+            }];
+
+            var datas = [];
+            for (var i = 0; i < plantCap.length; i++) {
+                var item = plantCap[i];
+                var itemToStyle = datalist[i];
+                datas.push({
+                    name: item.value + '\n' + item.name,
+                    value: itemToStyle.offset,
+                    symbolSize: itemToStyle.symbolSize,
+                    label: {
+                        normal: {
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        }
+                    },
+
+                    itemStyle: {
+                        normal: {
+                            color: itemToStyle.color,
+                            opacity: itemToStyle.opacity
+                        }
+                    },
+                })
+            }
+            option = {
+                grid: {
+                    show: false,
+                    top: 10,
+                    bottom: 10
+                },
+
+                xAxis: [{
+                    gridIndex: 0,
+                    type: 'value',
+                    show: false,
+                    min: 0,
+                    max: 100,
+                    nameLocation: 'middle',
+                    nameGap: 5
+                }],
+
+                yAxis: [{
+                    gridIndex: 0,
+                    min: 0,
+                    show: false,
+                    max: 100,
+                    nameLocation: 'middle',
+                    nameGap: 30
+                }],
+                series: [{
+                    type: 'scatter',
+                    symbol: 'circle',
+                    symbolSize: 120,
+                    label: {
+                        normal: {
+                            show: true,
+                            formatter: '{b}',
+                            color: '#FFF',
+                            textStyle: {
+                                fontSize: '30'
+                            }
+                        },
+                    },
+                    itemStyle: {
+                        normal: {
+                            color: '#F30'
+                        }
+                    },
+                    data: datas
+                }]
+
+            };
+            myChart4.setOption(option);
+        }
+        function PrestoreChartInit(v0, v1, v2) {
+            var v3 = v1 + v2//总用户数
+            option1 = {
+                series: [{
+                    type: 'pie',
+                    radius: ['70%', '80%'],
+                    color: '#0088cc',
+                    label: {
+                        normal: {
+                            position: 'center'
+                        }
+                    },
+                    data: [{
+                        value: v1,
+                        name: '平均预存量',
+                        label: {
+                            normal: {
+                                formatter: v0,
+                                textStyle: {
+                                    fontSize: 20,
+                                    color: '#fff',
+                                }
+                            }
+                        }
+                    },
+                    ]
+                }]
+            };
+            option2 = {
+                //animation: false,
+                series: [{
+                    type: 'pie',
+                    radius: ['70%', '80%'],
+                    color: '#fccb00',
+                    label: {
+                        normal: {
+                            position: 'center'
+                        }
+                    },
+                    data: [{
+                        value: v1,
+                        name: '预存用户',
+                        label: {
+                            normal: {
+                                formatter: v1 + '',
+                                textStyle: {
+                                    fontSize: 20,
+                                    color: '#fff',
+                                }
+                            }
+                        }
+                    }, {
+                        value: v2,
+                        name: '欠缴用户',
+                        label: {
+                            normal: {
+                                formatter: function (params) {
+                                    return '占比' + Math.round(v1 / v3 * 100) + '%'
+                                },
+                                textStyle: {
+                                    color: '#aaa',
+                                    fontSize: 12
+                                }
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: 'rgba(255,255,255,.2)'
+                            },
+                            emphasis: {
+                                color: '#fff'
+                            }
+                        },
+                    }]
+                }]
+            };
+            option3 = {
+                series: [{
+                    type: 'pie',
+                    radius: ['70%', '80%'],
+                    color: '#62b62f',
+                    label: {
+                        normal: {
+                            position: 'center'
+                        }
+                    },
+                    data: [{
+                        value: v2,
+                        name: '预存用户',
+                        label: {
+                            normal: {
+                                formatter: v2 + '',
+                                textStyle: {
+                                    fontSize: 20,
+                                    color: '#fff',
+                                }
+                            }
+                        }
+                    }, {
+                        value: v1,
+                        name: '欠缴用户',
+                        label: {
+                            normal: {
+                                formatter: function (params) {
+                                    return '占比' + Math.round(v2 / v3 * 100) + '%'
+                                },
+                                textStyle: {
+                                    color: '#aaa',
+                                    fontSize: 12
+                                }
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: 'rgba(255,255,255,.2)'
+                            },
+                            emphasis: {
+                                color: '#fff'
+                            }
+                        },
+                    }]
+                }]
+            };
+            setTimeout(function () {
+                myChart1.setOption(option1);
+                myChart2.setOption(option2);
+                myChart3.setOption(option3);
+            }, 500);
+        }
+        function MonthChartInit(v0, v1, v2) {
+            option6 = {
+                series: [{
+                    type: 'pie',
+                    radius: ['70%', '80%'],
+                    color: '#0088cc',
+                    label: {
+                        normal: {
+                            position: 'center'
+                        }
+                    },
+                    data: [{
+                        value: v0,
+                        name: '总用量',
+                        label: {
+                            normal: {
+                                formatter: v0 + '',
+                                textStyle: {
+                                    fontSize: 20,
+                                    color: '#fff',
+                                }
+                            }
+                        }
+                    }]
+                }]
+
+            };
+            option7 = {
+                series: [{
+                    type: 'pie',
+                    radius: ['70%', '80%'],
+                    color: '#fccb00',
+                    label: {
+                        normal: {
+                            position: 'center'
+                        }
+                    },
+                    data: [{
+                        value: v1,
+                        name: '总消费',
+                        label: {
+                            normal: {
+                                formatter: v1 + '',
+                                textStyle: {
+                                    fontSize: 20,
+                                    color: '#fff',
+                                }
+                            }
+                        }
+                    }]
+                }]
+            };
+            option8 = {
+                series: [{
+
+                    type: 'pie',
+                    radius: ['70%', '80%'],
+                    color: '#62b62f',
+                    label: {
+                        normal: {
+                            position: 'center'
+                        }
+                    },
+                    data: [{
+                        value: v2,
+                        name: '总营收',
+                        label: {
+                            normal: {
+                                formatter: v2 + '',
+                                textStyle: {
+                                    fontSize: 20,
+                                    color: '#fff',
+                                }
+                            }
+                        }
+                    }]
+                }]
+            };
+            setTimeout(function () {
+                myChart6.setOption(option6);
+                myChart7.setOption(option7);
+                myChart8.setOption(option8);
+            }, 500);
+
+        }
+    </script>
+</head>
+<body>
+    <div class="loading">
+        <div class="loadbox"> <img src="/content/images/loading.gif"> 页面加载中... </div>
+    </div>
+    <div class="head">
+        <h1>@ViewData["compayName"]大数据可视化平台</h1>
+        <div id="weather" class="weather"><img src="/content/images/weather.png"><span>晴转多云</span><span>2018-8-27</span></div>
+    </div>
+    <div class="mainbox">
+        <ul class="clearfix">
+            <li>
+                <div class="boxall" style="height: 2.7rem">
+                    <div class="alltitle">关键指标</div>
+
+                    <div class="sycm">
+                        <ul class="clearfix">
+                            <li><h2 class="m-top-none">0</h2><span>客户数量</span></li>
+                            <li><h2 class="m-top-none">0</h2><span>正常表数</span></li>
+                            <li><h2 class="m-top-none">0%</h2><span>抄收率</span></li>
+                        </ul>
+                        <div style="border-bottom: 1px solid rgba(255,255,255,.1)"></div>
+                        <ul class="clearfix">
+                            <li><h2 class="m-top-none">0</h2><span>今日销售额</span></li>
+                            <li><h2 class="m-top-none">0</h2><span>昨日销售额</span></li>
+                            <li><h2 class="m-top-none">0%</h2><span>环比增长</span></li>
+                        </ul>
+                    </div>
+                    <div class="boxfoot"></div>
+                </div>
+                <div class="boxall" style="height: 2.65rem">
+                    <div class="alltitle">预存分析</div>
+                    <div class="sy" id="echarts1"></div>
+                    <div class="sy" id="echarts2"></div>
+                    <div class="sy" id="echarts3"></div>
+                    <div class="boxfoot"></div>
+                </div>
+                <div class="boxall" style="height: 2.95rem">
+                    <div class="alltitle">支付方式比例</div>
+                    <div id="echarts4" style="height: 2.2rem; width: 100%;"></div>
+                    <div class="boxfoot"></div>
+                </div>
+            </li>
+            <li>
+                <div class="bar">
+                    <div class="barbox">
+                        <ul class="clearfix">
+                            <li class="pulll_left counter m-top-none">0</li>
+                            <li class="pulll_left counter m-top-none">0</li>
+                        </ul>
+                    </div>
+                    <div class="barbox2">
+                        <ul class="clearfix">
+                            <li class="pulll_left">销售总金额</li>
+                            <li class="pulll_left">实收总金额</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="map">
+                    <div class="map1"><img src="/content/images/lbx.png"></div>
+                    <div class="map2"><img src="/content/images/jt.png"></div>
+                    <div class="map3"><img src="/content/images/map.png"></div>
+                    <div class="map4" id="map_1"></div>
+                </div>
+            </li>
+            <li>
+                <div class="boxall" style="height:5.2rem">
+                    <div class="alltitle">月度报表</div>
+                    <div class="clearfix">
+                        <div class="sy" id="echarts6"></div>
+                        <div class="sy" id="echarts7"></div>
+                        <div class="sy" id="echarts8"></div>
+                    </div>
+                    <div class="addnew">
+                        <div class="tit02"><span>客户消费统计</span></div>
+                        <div class="adduser">
+                            <ul class="clearfix" id="adduser"></ul>
+                        </div>
+                    </div>
+                    <div class="boxfoot"></div>
+                </div>
+                <div class="boxall" style="height: 3.4rem">
+                    <div class="alltitle">实时缴费记录</div>
+                    <div class="wrap">
+                        <ul id="addpay">
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                            <li>
+                                <p>1淄博贝林电子有限公司-营业厅缴费-3000元</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="boxfoot"></div>
+                </div>
+            </li>
+        </ul>
+        <div class="copyright">版权所有：淄博贝林电子有限公司 鲁ICP备525780175号</div>
+    </div>
+    <div class="back"></div>
+    <script language="JavaScript" src="/content/js/js.js"></script>
+    <script type="text/javascript" src="/content/js/echarts.min.js"></script>
+    <script type="text/javascript" src="/content/js/china.js"></script>
+    <script type="text/javascript" src="/content/js/area_echarts.js"></script>
+    <script type="text/javascript">
+        var myChart1 = echarts.init(document.getElementById('echarts1'));
+        var myChart3 = echarts.init(document.getElementById('echarts3'));
+        var myChart2 = echarts.init(document.getElementById('echarts2'));
+        var myChart4 = echarts.init(document.getElementById('echarts4'));
+        var myChart6 = echarts.init(document.getElementById('echarts6'));
+        var myChart7 = echarts.init(document.getElementById('echarts7'));
+        var myChart8 = echarts.init(document.getElementById('echarts8'));
+        $(document).ready(function () {
+            myChart1.resize();
+            myChart2.resize();
+            myChart3.resize();
+            myChart4.resize();
+            myChart6.resize();
+            myChart7.resize();
+            myChart8.resize();
+        })
+        window.addEventListener("resize", function () {
+            myChart1.resize();
+            myChart2.resize();
+            myChart3.resize();
+            myChart4.resize();
+            myChart6.resize();
+            myChart7.resize();
+            myChart8.resize();
+        });
+    </script>
+    <script type="text/javascript" src="/content/js/jquery.waypoints.min.js"></script>
+    <script type="text/javascript" src="/content/js/jquery.countup.min.js"></script>
+    <script type="text/javascript">
+        $('.counter').countUp();
+    </script>
+</body>
+</html>

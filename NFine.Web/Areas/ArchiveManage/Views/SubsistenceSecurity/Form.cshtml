@@ -1,0 +1,160 @@
+﻿@using NFine.Code
+@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<link href="~/Content/js/autocomplete/usbox.css" rel="stylesheet" />
+<link href="~/Content/js/autocomplete/jquery.autocomplete.css" rel="stylesheet" />
+<script src="~/Content/js/autocomplete/jquery.autocomplete.js"></script>
+<script src="~/Content/js/autocomplete/usbox.js"></script>
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        initControl();
+        $("#F_UserCard").blur(function () {
+            $.ajax({
+                url: "/ArchiveManage/Meter/GetFormJsonByUserCard",
+                data: { keyValue: $("#F_UserCard").val() },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data == null) {
+                        $("#MeterCode").css('display', 'none');
+                        $("#CustomerName").css('display', 'none');
+                        $("#F_MeterCode").val("");
+                        $("#F_CustomerName").val("");
+                        $("#F_ArchiveId").val("");
+                        $("#F_UserCard").addError("用户卡不存在");
+                    } else {
+                        $("#F_ArchiveId").val(data.F_Id);
+                        $("#MeterCode").css('display', 'table-row');
+                        $("#CustomerName").css('display', 'table-row');
+                        $("#form1").formSerialize(data);
+                        $("#F_UserCard").removeError();
+                    }
+                }
+            });
+        });
+        $("#F_UserCard").keyup(function () {
+            $("#MeterCode").css('display', 'none');
+            $("#CustomerName").css('display', 'none');
+            $("#F_MeterCode").val("");
+            $("#F_CustomerName").val("");
+        });
+        $("#usbox").usbox({
+            width: 430,
+            urlOrData: '/ArchiveManage/Meter/QueryComplete',
+            addItem: function (data) {
+                var t = $("#hdtext").val();
+                var v = $("#hdvalue").val();
+                var t1 = t != "" ? t.split(",") : [];
+                var v1 = v != "" ? v.split(",") : [];
+                t1.push(data[0]);
+                v1.push(data[2]);
+                $("#hdtext").val(t1.join(","));
+                $("#hdvalue").val(v1.join(","));
+            },
+            removeItem: function (data) {
+                var t = $("#hdtext").val();
+                var v = $("#hdvalue").val();
+                var t1 = t.split(",");
+                var v1 = v.split(",");
+                var index = -1;
+                for (var i = v1.length - 1; i >= 0; i--) {
+                    if (data[2] == v1[i]) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index > -1) {
+                    t1.splice(index, 1);
+                    v1.splice(index, 1);
+                    $("#hdtext").val(t1.join(","));
+                    $("#hdvalue").val(v1.join(","));
+                }
+            }
+        });
+        if (!!keyValue) {
+            $.ajax({
+                url: "/ArchiveManage/SubsistenceSecurity/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $("#F_UserCard").attr("disabled", "disabled");
+                    $("#MeterCode").css('display', 'table-row');
+                    $("#CustomerName").css('display', 'table-row');
+                    $("#form1").formSerialize(data);
+                }
+            });
+        }
+    });
+    function initControl() {
+        $("#F_PriceId").bindSelect(
+        {
+            url: "/ArchiveManage/Price/GetSelectJson",
+            param: { isStatrt: true },
+            id: "F_Id",
+            text: "F_PriceName"
+        });
+    }
+    function submitForm() {
+        if (!$('#form1').formValid()) {
+            return false;
+        }
+        $.submitForm({
+            url: "/ArchiveManage/SubsistenceSecurity/SubmitForm?keyValue=" + keyValue,
+            param: $("#form1").formSerialize(),
+            success: function () {
+                $.currentWindow().$("#gridList").trigger("reloadGrid");
+            }
+        });
+    }
+</script>
+
+<form id="form1">
+    <div style="padding-top: 20px; margin-right: 20px;">
+        <table class="form">
+            <tr>
+                <th class="formTitle" style="padding-right: 9px;">用户卡号</th>
+                <td class="formValue" id="usbox">
+                    <input id="hdtext" type="hidden" />
+                    <input id="hdvalue" type="hidden" />
+                    <input id="F_ArchiveId" name="F_ArchiveId" type="hidden" />
+                    <input id="F_UserCard" name="F_UserCard" type="text" class="form-control required" placeholder="请输入客户信息检索" />
+                </td>
+            </tr>
+            <tr id="MeterCode" style="display:none">
+                <th class="formTitle">表计编码</th>
+                <td class="formValue">
+                    <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control required" placeholder="请输入表计编码" disabled="disabled" />
+                    <input id="F_MeterNumber" name="F_MeterNumber" type="hidden" />
+                </td>
+            </tr>
+            <tr id="CustomerName" style="display:none">
+                <th class="formTitle">客户名称</th>
+                <td class="formValue">
+                    <input id="F_CustomerName" name="F_CustomerName" type="text" class="form-control required" placeholder="请输入客户名称" disabled="disabled" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行价格</th>
+                <td class="formValue">
+                    <select id="F_PriceId" name="F_PriceId" class="form-control required"></select>
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行时间</th>
+                <td class="formValue">
+                    <input id="F_StartTime" name="F_StartTime" type="text" class="form-control input-wdatepicker required" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd'})" />
+                </td>
+            </tr>
+            <tr>
+                <th class="formTitle">执行月数</th>
+                <td class="formValue">
+                    <input id="F_EnjoyTime" name="F_EnjoyTime" type="text" class="form-control required" placeholder="请输入执行月数" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

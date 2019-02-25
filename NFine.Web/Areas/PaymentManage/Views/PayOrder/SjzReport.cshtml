@@ -1,0 +1,103 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<style>
+    body {
+        font-size: 13px;
+    }
+</style>
+<script src="~/Content/js/LodopFuncs.js"></script>
+<script language="javascript" type="text/javascript">
+    var LODOP = getLodop(document.getElementById('LODOP_OB'), document.getElementById('LODOP_EM')); //这行语句是为了符合DTD规范
+    var keyValue = $.request("keyValue");
+    var customer = "";
+    var address = "";
+    var money = "";
+    var price = "";
+    var time = "";
+    $(function () {
+        if (!!keyValue) {
+            $.ajax({
+                url: "/PaymentManage/PayOrder/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    customer = data.F_CustomerName;
+                    address = data.F_CustomerAddress;
+                    money = data.F_Money + "(余额：" + data.F_Balance + ")";
+                    price = data.F_UnitPrice;
+                    time = data.F_PaymentTime;
+                    Preview2();
+                }
+            });
+        }
+    });
+
+    function Preview2() {
+        try {
+            $.loading(true, "正在打印...");
+            CreateDataBill();
+            var index = parent.layer.getFrameIndex(window.name);
+            LODOP.PREVIEW();
+            $.loading(false, "正在打印...");
+            parent.layer.close(index);
+        } catch (err) {
+            $.loading(false, "正在打印...");
+        }
+    };
+
+    function Setup2() {
+        CreateDataBill();
+        LODOP.PRINT_SETUP();
+    };
+
+    function Design2() {
+        CreateDataBill();
+        LODOP.PRINT_DESIGN();
+
+    };
+
+    function CreateDataBill() {
+        LODOP.PRINT_INIT("发票打印");
+        LODOP.PRINT_INITA(0, 0, 1496, 591, "");
+        LODOP.SET_PRINT_PAGESIZE(1, 1900, 750, "");
+        LODOP.ADD_PRINT_SETUP_BKIMG("<img src='/Content/activex/shijiazhuang.png'/>");
+        LODOP.SET_SHOW_MODE("BKIMG_WIDTH", 718);
+        LODOP.SET_SHOW_MODE("BKIMG_HEIGHT", 284);
+        LODOP.SET_SHOW_MODE("BKIMG_IN_PREVIEW", true);
+        LODOP.ADD_PRINT_TEXT(155, 88, 190, 24, customer);
+        LODOP.SET_PRINT_STYLEA(0, "FontSize", 10);
+        LODOP.SET_PRINT_STYLEA(0, "Alignment", 2);
+        LODOP.ADD_PRINT_TEXT(194, 89, 189, 23, address);
+        LODOP.SET_PRINT_STYLEA(0, "FontSize", 10);
+        LODOP.SET_PRINT_STYLEA(0, "Alignment", 2);
+        LODOP.ADD_PRINT_TEXT(191, 408, 252, 28, money);
+        LODOP.SET_PRINT_STYLEA(0, "FontSize", 10);
+        LODOP.SET_PRINT_STYLEA(0, "Alignment", 2);
+        LODOP.ADD_PRINT_TEXT(159, 462, 48, 24, price);
+        LODOP.SET_PRINT_STYLEA(0, "FontSize", 10);
+        LODOP.SET_PRINT_STYLEA(0, "Alignment", 2);
+        LODOP.ADD_PRINT_TEXT(92, 269, 174, 22, time);
+        LODOP.SET_PRINT_STYLEA(0, "FontSize", 10);
+        LODOP.SET_PRINT_STYLEA(0, "Alignment", 2);
+    }
+
+    function RealPrint() {
+        CreateDataBill();
+        if (LODOP.PRINTA())
+            alert("已发出实际打印命令！");
+        else
+            alert("放弃打印！");
+    };
+
+    function submitForm() {
+        $.currentWindow().$("#gridList").trigger("reloadGrid");
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);
+    }
+</script>
+<object id="LODOP_OB" classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0>
+    <embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0></embed>
+</object>

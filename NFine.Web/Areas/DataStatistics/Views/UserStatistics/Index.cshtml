@@ -1,0 +1,225 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Index.cshtml";
+}
+<style>
+    .panel {
+        margin-bottom: 3px;
+    }
+</style>
+<script src="~/Content/js/charts/Chart.js"></script>
+<script>
+    var meter = "";
+    $(function () {
+        initTree();
+        $("#btn_treeSearch").click(function () {
+            initTree();
+        });
+    });
+    function GetSalaryChart() {
+        var queryJson = {
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+            keyValue: meter
+        }
+        $.ajax({
+            url: "/DataStatistics/UserStatistics/GetSalaryChart",
+            dataType: "json",
+            data: { queryJson: JSON.stringify(queryJson) },
+            async: false,
+            success: function (data) {
+                var barChartData = {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            fillColor: "rgba(220,220,220,0.5)",
+                            strokeColor: "rgba(220,220,220,1)",
+                            data: data.data[0]
+                        }
+                    ]
+                }
+                var ctx = document.getElementById("salarychart").getContext("2d");
+                if (window.myLine) window.myLine.destroy();
+                window.myLine = new Chart(ctx).Bar(barChartData, {
+                    responsive: false,
+                    bezierCurve: false
+                });
+            }
+        });
+    }
+    function initTree() {
+        $("#treeview-selectable").css("height", $(window).height() - 115);
+        $.ajax({
+            type: "post", //以post方式与后台沟通
+            url: "/ArchiveManage/Meter/CustomerTree", //与此页面沟通
+            data: { customerName: $("#txt_keyword").val() },
+            datatype: "json",
+            success: function (defaultData) {
+                var initSelectableTree = function () {
+                    return $('#treeview-selectable').treeview({
+                        levels: 1,
+                        // color: "#18A689",
+                        expandIcon: "glyphicon glyphicon-stop",
+                        collapseIcon: "glyphicon glyphicon-unchecked",
+                        nodeIcon: "glyphicon glyphicon-user",
+                        backColor: "#FFFFFF",
+                        selectedBackColor: "#1ABC9C",
+                        showBorder: false,
+                        showTags: true,
+                        data: defaultData,
+                        multiSelect: $('#chk-select-multi').is(':checked'),
+                        onNodeSelected: function (event, node) {
+                            CustomerClick(node.href);
+                        }
+                    });
+                };
+                var $selectableTree = initSelectableTree();
+                $selectableTree.treeview('expandNode', [0, { levels: 1, silent: $('#chk-expand-silent').is(':checked') }]);
+                $selectableTree.treeview('selectNode', [1, { silent: $('#chk-select-silent').is(':checked') }]);
+                gridList();
+            }
+        });
+    }
+    function CustomerClick(href) {
+        var $gridList = $("#gridList");
+        if (href !== "") {
+            meter = href;
+            var queryJson = {
+                begintime: $("#txt_begintime").val(),
+                endtime: $("#txt_endtime").val(),
+                keyValue: meter
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+            GetSalaryChart();
+        } else {
+            meter = "";
+        }
+    }
+    function reload() {
+        location.reload();
+        return false;
+    }
+    function gridList() {
+        var $gridList = $("#gridList");
+        var queryJson = {
+            begintime: $("#txt_begintime").val(),
+            endtime: $("#txt_endtime").val(),
+            keyValue: meter
+        }
+        $gridList.dataGrid({
+            url: "/DataStatistics/UserStatistics/GetGridJson",
+            height: $(window).height() - 118 - 335,
+            postData: {
+                queryJson: JSON.stringify(queryJson)
+            },
+            colModel: [
+                { label: '主键', name: 'F_Id', hidden: true },
+                {
+                    label: '表类型', name: 'F_MeterType', width: 80, align: 'left', sortable: false,
+                    formatter: function (cellvalue) {
+                        return top.clients.dataItems["DeviceType"][cellvalue] == undefined ? "" : top.clients.dataItems["DeviceType"][cellvalue];
+                    }
+                },
+                { label: '用户卡号', name: 'F_UserCard', width: 120, align: 'left', sortable: false },
+                { label: '表计编码', name: 'F_MeterCode', width: 120, align: 'left', sortable: false },
+                { label: '当日用量', name: 'F_SumDosage', width: 120, align: 'left', sortable: false },
+                { label: '客户名称', name: 'F_CustomerName', width: 80, align: 'left', sortable: false },
+                { label: '联系方式', name: 'F_MobilePhone', width: 80, align: 'left', sortable: false },
+                { label: '安装地址', name: 'F_CustomerAddress', width: 120, align: 'left', sortable: false },
+                {
+                    label: '统计时间', name: 'F_Date', width: 120, align: 'left', sortable: false,
+                    formatter: "datetime", formatoptions: { srcformat: 'ymd', newformat: 'y-m-d' }
+                }
+            ],
+            pager: "#gridPager",
+            sortname: 'F_Date asc',
+            viewrecords: true
+        });
+        $("#btn_search").click(function () {
+            var queryJson = {
+                begintime: $("#txt_begintime").val(),
+                endtime: $("#txt_endtime").val(),
+                keyValue: meter
+            }
+            $gridList.jqGrid('setGridParam', {
+                postData: {
+                    queryJson: JSON.stringify(queryJson)
+                }
+            }).trigger('reloadGrid');
+            GetSalaryChart();
+        });
+    }
+</script>
+<div>
+    <div style="float: left; width: 20%;">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <i class="fa fa-user fa-lg" style="padding-right: 5px;"></i>用户信息
+                <div style="float: right">
+                </div>
+            </div>
+            <div class="panel-body" style="padding-bottom: 0px; overflow: hidden; width: 120%">
+                <div class="search" style="width: 80%;">
+                    <table>
+                        <tr>
+                            <td style="padding-left: 2px;">
+                                <div class="input-group">
+                                    <input id="txt_keyword" type="text" class="form-control" placeholder="客户名称">
+                                    <span class="input-group-btn" style="z-index:999">
+                                        <button id="btn_treeSearch" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="treeview-selectable" style="height: 500px; width: 80%; overflow-x: hidden; overflow-y: scroll; padding-right: 10%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div style="float: right; width: 79%;">
+        <div class="topPanel">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <a class="btn btn-primary" onclick="reload()"><span class="glyphicon glyphicon-refresh"></span></a>
+                </div>
+                <script>$('.toolbar').authorizeButton()</script>
+            </div>
+            <div class="search">
+                <table>
+                    <tr>
+                        <td>
+                            <input type="text" placeholder="选择开始时间" readonly="readonly" id="txt_begintime" name="begintime" value="@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")"
+                                   class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', startDate: '%y-%M-%d', maxDate: '#F{$dp.$D(\'txt_endtime\')||\'%y-%M-%d\'}' })" />
+                            <input type="text" placeholder="选择结束时间" readonly="readonly" id="txt_endtime" name="endtime" value="@DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd")"
+                                   class="btn btn-default input-wdatepicker" onfocus="WdatePicker({ isShowClear: false, dateFmt: 'yyyy-MM-dd', minDate: '#F{$dp.$D(\'txt_begintime\')}', maxDate: '%y-%M-%d', startDate: '%y-%M-%d' })" />
+                            <button id="btn_search" type="button" class="btn  btn-primary"><i class="fa fa-search"></i></button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <i class="fa fa-bar-chart fa-lg" style="padding-right: 5px;"></i>统计图表
+            </div>
+            <div class="panel-body" style="padding-bottom: 0px;">
+                <canvas id="salarychart" style="height: 230px; width: 100%; padding-right: 10px;"></canvas>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <i class="fa fa-navicon fa-lg" style="padding-right: 5px;"></i>统计明细
+            </div>
+            <div class="gridPanel">
+                <table id="gridList"></table>
+                <div id="gridPager"></div>
+            </div>
+        </div>
+    </div>
+</div>

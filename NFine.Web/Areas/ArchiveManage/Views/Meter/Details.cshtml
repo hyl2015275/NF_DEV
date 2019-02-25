@@ -1,0 +1,216 @@
+﻿@{
+    ViewBag.Title = "Form";
+    Layout = "~/Views/Shared/_Form.cshtml";
+}
+<script>
+    var keyValue = $.request("keyValue");
+    $(function () {
+        list();
+        initControl();
+        if (!!keyValue) {
+            $.ajax({
+                url: "/ArchiveManage/Meter/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $("#form1").formSerialize(data);
+                    $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                    $("#form1").find('div.ckbox label').attr('for', '');
+                }
+            });
+            $.ajax({
+                url: "/ArchiveManage/MeterCharging/GetFormJson",
+                data: { keyValue: keyValue },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $("#form1").formSerialize(data);
+                    $("#form1").find('.form-control,select,input').attr('readonly', 'readonly');
+                    $("#form1").find('div.ckbox label').attr('for', '');
+                }
+            });
+        }
+    });
+    function list() {
+        var tm1 = $("#txt_CompanyId").val();
+        if ($("#txt_CompanyId").val() == "bd602a97-eb06-4a5e-9c36-30eb45bc717b")//此处需改为：登录用户为：临朐清源的CompanyId
+        {
+            $('#tr_id').css('display', 'block');
+            //$('#tr_id').css('left', '10px');
+        } else {
+            $('#tr_id').css('display', 'none');
+        }
+    }
+    function initControl() {
+        $("#F_Factor").bindSelect();
+        $("#F_PriceModel").bindSelect(
+        {
+            url: "/ArchiveManage/Price/GetSelectJson",
+            param: { isStatrt: true },
+            id: "F_Id",
+            text: "F_PriceName"
+        });
+        $("#F_MeterType").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "DeviceType" }
+        });
+        $("#F_MeterModel").bindSelect({
+            url: "/SystemManage/ItemsData/GetSelectJson",
+            param: { enCode: "MeterModel" }
+        });
+    }
+</script>
+<form id="form1">
+    <div style="margin-top: 10px; margin-left: 10px; margin-right: 10px;">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#a" data-toggle="tab">基本信息</a></li>
+            <li><a href="#b" data-toggle="tab">计费控制</a></li>
+        </ul>
+        <div class="tab-content" style="padding-top: 5px;">
+            <div id="a" class="tab-pane active" style="padding: 15px;">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">表计类型</th>
+                        <td class="formValue">
+                            <select id="F_MeterType" name="F_MeterType" class="form-control required"></select>
+                        </td>
+                        <th class="formTitle">生产厂商</th>
+                        <td class="formValue">
+                            <select id="F_Factor" name="F_Factor" class="form-control required">
+                                <option value="贝林电子">贝林电子</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">用户卡号</th>
+                        <td class="formValue">
+                            <input id="F_UserCard" name="F_UserCard" type="text" class="form-control required" placeholder="请输入用户卡号" />
+                        </td>
+                        <th class="formTitle">表计编码</th>
+                        <td class="formValue">
+                            <input id="F_MeterCode" name="F_MeterCode" type="text" class="form-control required" placeholder="请输入表计编码" />
+                        </td>
+                        <td style="display: none">
+                            <input id="F_MeterNumber" name="F_MeterNumber" type="text" class="form-control required" placeholder="请输入表计编号" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">表计型号</th>
+                        <td class="formValue">
+                            <input id="F_MeterName" name="F_MeterName" type="text" class="form-control" placeholder="请输入表计型号" />
+                        </td>
+                        <th class="formTitle">表计倍率</th>
+                        <td class="formValue">
+                            <input id="F_MeterRate" name="F_MeterRate" type="number" class="form-control" placeholder="请输入设备倍率" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">客户名称</th>
+                        <td class="formValue">
+                            <input id="F_CustomerName" name="F_CustomerName" type="text" class="form-control required" placeholder="请输入客户名称" />
+                        </td>
+                        <th class="formTitle">身份证号</th>
+                        <td class="formValue">
+                            <input id="F_IDNumber" name="F_MobilePhone" type="text" class="form-control " placeholder="请输入身份证号" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">联系方式</th>
+                        <td class="formValue">
+                            <input id="F_MobilePhone" name="F_MobilePhone" type="tel" class="form-control required" placeholder="请输入联系方式" />
+                        </td>
+                        <th class="formTitle">安装地址</th>
+                        <td class="formValue">
+                            <input id="F_CustomerAddress" name="F_CustomerAddress" type="text" class="form-control" placeholder="请输入安装地址" />
+                        </td>
+                    </tr>
+                    <tr id="tr_id">
+                        <th class="formTitle" style="left:30px;">GPS坐标</th>
+                        <td class="formValue" style="left:26px;">
+                            <input id="F_GPS" name="F_GPS" type="text" class="form-control" style="margin-right: 30px;width:180px;" placeholder="请输入GPS坐标" />
+                        </td>
+                        <th class="formTitle" style="left:40px;">表径</th>
+                        <td class="formValue" style="left:50px;">
+                            <input id="F_BiaoJing" name="F_BiaoJing" type="text" class="form-control" style="width:180px;" placeholder="请输入表径" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle" valign="top" style="padding-top: 5px;">
+                            备注
+                        </th>
+                        <td class="formValue" colspan="3">
+                            <textarea id="F_Description" name="F_Description" class="form-control" style="height: 60px;"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">创建人员</th>
+                        <td class="formValue">
+                            <input id="F_CreatorUserId" name="F_CreatorUserId" type="text" class="form-control" />
+                        </td>
+                        <th class="formTitle">创建时间</th>
+                        <td class="formValue">
+                            <input id="F_CreatorTime" name="F_CreatorTime" type="text" class="form-control" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">修改人员</th>
+                        <td class="formValue">
+                            <input id="F_LastModifyUserId" name="F_LastModifyUserId" type="text" class="form-control" />
+                        </td>
+                        <th class="formTitle">修改时间</th>
+                        <td class="formValue">
+                            <input id="F_LastModifyTime" name="F_LastModifyTime" type="text" class="form-control" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="b" class="tab-pane" style="padding: 15px;">
+                <table class="form">
+                    <tr>
+                        <th class="formTitle">计费方式</th>
+                        <td class="formValue">
+                            <select id="F_MeterModel" name="F_MeterModel" class="form-control required"></select>
+                        </td>
+                        <th class="formTitle">价格执行</th>
+                        <td class="formValue">
+                            <select id="F_PriceModel" name="F_PriceModel" class="form-control required"></select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">起始量</th>
+                        <td class="formValue">
+                            <input id="F_StartValue" name="F_StartValue" type="text" class="form-control required" value="0" placeholder="请输入起始量" />
+                        </td>
+                        <th class="formTitle">卡内余额</th>
+                        <td class="formValue">
+                            <input id="F_Balance" name="F_Balance" type="text" class="form-control required" value="0" placeholder="请输入余额" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle">报警金额</th>
+                        <td class="formValue">
+                            <input id="F_AlarmAmount" name="F_AlarmAmount" type="text" class="form-control required" value="0" placeholder="请输入报警金额" />
+                        </td>
+                        <th class="formTitle closeValue">关阀金额</th>
+                        <td class="formValue closeValue">
+                            <input id="F_CloseAmount" name="F_CloseAmount" type="text" class="form-control required" value="0" placeholder="请输入关阀金额" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="formTitle" style="height: 35px;">选项</th>
+                        <td class="formValue" colspan="3" style="padding-top: 1px;">
+                            <div class="ckbox">
+                                <input id="F_EnableAlarm" name="F_EnableAlarm" type="checkbox" checked="checked"><label for="F_EnableAlarm">启用报警</label>
+                            </div>
+                            <div class="ckbox closeValue">
+                                <input id="F_EnableClose" name="F_EnableClose" type="checkbox" checked="checked"><label for="F_EnableClose">启用关阀</label>
+                                <input id="txt_CompanyId" name="txt_CompanyId" type="text" class="form-control required" style="display:none" value="@NFine.Code.OperatorProvider.Provider.GetCurrent().CompanyId" />
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
